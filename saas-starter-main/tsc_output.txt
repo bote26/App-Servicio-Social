@@ -1,0 +1,5 @@
+app/(dashboard)/dashboard/page.tsx(12,38): error TS2307: Cannot find module '@/lib/payments/actions' or its corresponding type declarations.
+app/(dashboard)/dashboard/page.tsx(53,42): error TS2339: Property 'planName' does not exist on type 'TeamDataWithMembers'.
+app/(dashboard)/dashboard/page.tsx(56,28): error TS2339: Property 'subscriptionStatus' does not exist on type 'TeamDataWithMembers'.
+app/(dashboard)/dashboard/page.tsx(58,31): error TS2339: Property 'subscriptionStatus' does not exist on type 'TeamDataWithMembers'.
+app/(login)/actions.ts(22,39): error TS2307: Cannot find module '@/lib/payments/stripe' or its corresponding type declarations.
