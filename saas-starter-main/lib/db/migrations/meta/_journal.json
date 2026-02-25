@@ -15,6 +15,13 @@
       "when": 1771461984093,
       "tag": "0001_skinny_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771891319817,
+      "tag": "0002_amused_thor",
+      "breakpoints": true
     }
   ]
 }

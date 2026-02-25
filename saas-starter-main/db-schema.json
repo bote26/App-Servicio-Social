@@ -1,0 +1,57 @@
+{
+  "tables": [
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "activity_logs"
+    },
+    {
+      "table_name": "registrations"
+    }
+  ],
+  "columns": [
+    {
+      "column_name": "id",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "user_id",
+      "data_type": "integer",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "action",
+      "data_type": "text",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "timestamp",
+      "data_type": "timestamp without time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "ip_address",
+      "data_type": "character varying",
+      "is_nullable": "YES"
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_name": "activity_logs_pkey"
+    },
+    {
+      "constraint_name": "activity_logs_user_id_users_id_fk"
+    },
+    {
+      "constraint_name": "2200_24577_1_not_null"
+    },
+    {
+      "constraint_name": "2200_24577_3_not_null"
+    },
+    {
+      "constraint_name": "2200_24577_4_not_null"
+    }
+  ]
+}

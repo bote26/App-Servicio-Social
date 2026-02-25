@@ -6,46 +6,58 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CircleIcon, Loader2 } from 'lucide-react';
+import { Loader2, User, Lock, Apple, PlayCircle, Twitter, Facebook, Instagram, Youtube } from 'lucide-react';
 import { signIn, signUp } from './actions';
 import { ActionState } from '@/lib/auth/middleware';
+import { TecLogo, MiTecLogo } from '@/components/tec-logo';
 
 export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
-  const priceId = searchParams.get('priceId');
-  const inviteId = searchParams.get('inviteId');
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     mode === 'signin' ? signIn : signUp,
     { error: '' }
   );
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <CircleIcon className="h-12 w-12 text-orange-500" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'signin'
-            ? 'Sign in to your account'
-            : 'Create your account'}
-        </h2>
-      </div>
+    <div className="relative min-h-[100dvh] flex flex-col overflow-hidden font-sans selection:bg-blue-500 selection:text-white">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1541339907198-e08759df9a13?q=80&w=2070&auto=format&fit=crop')`,
+        }}
+      />
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form className="space-y-6" action={formAction}>
-          <input type="hidden" name="redirect" value={redirect || ''} />
-          <input type="hidden" name="priceId" value={priceId || ''} />
-          <input type="hidden" name="inviteId" value={inviteId || ''} />
-          <div>
-            <Label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </Label>
-            <div className="mt-1">
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 z-10 login-overlay" />
+
+      {/* Top Header */}
+      <header className="relative z-20 w-full flex justify-between items-center px-4 py-4 md:px-12 md:py-6">
+        <TecLogo className="w-48 md:w-64 h-auto" white={true} />
+
+        <div className="hidden md:flex items-center gap-4 text-white/80">
+          <Apple size={18} className="cursor-pointer hover:text-white" />
+          <PlayCircle size={18} className="cursor-pointer hover:text-white" />
+          <Twitter size={18} className="cursor-pointer hover:text-white" />
+          <Facebook size={18} className="cursor-pointer hover:text-white" />
+          <Instagram size={18} className="cursor-pointer hover:text-white" />
+          <Youtube size={18} className="cursor-pointer hover:text-white" />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="relative z-20 flex-1 flex flex-col items-center justify-center px-4 pb-20">
+        <div className="w-full max-w-[340px] flex flex-col items-center">
+          <MiTecLogo className="mb-8 scale-110" />
+
+          <form action={formAction} className="w-full space-y-4">
+            <input type="hidden" name="redirect" value={redirect || ''} />
+
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">
+                <User size={18} />
+              </div>
               <Input
                 id="email"
                 name="email"
@@ -53,90 +65,71 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 autoComplete="email"
                 defaultValue={state.email}
                 required
-                maxLength={50}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
+                className="w-full h-11 pl-12 pr-4 bg-white/90 backdrop-blur-sm border-none rounded-full text-gray-800 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-blue-400"
+                placeholder={mode === 'signin' ? "A0166354" : "Email"}
               />
             </div>
-          </div>
 
-          <div>
-            <Label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </Label>
-            <div className="mt-1">
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">
+                <Lock size={18} />
+              </div>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={
-                  mode === 'signin' ? 'current-password' : 'new-password'
-                }
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 defaultValue={state.password}
                 required
-                minLength={8}
-                maxLength={100}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your password"
+                className="w-full h-11 pl-12 pr-4 bg-white/90 backdrop-blur-sm border-none rounded-full text-gray-800 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-blue-400"
+                placeholder="••••••••••••"
               />
             </div>
-          </div>
 
-          {state?.error && (
-            <div className="text-red-500 text-sm">{state.error}</div>
-          )}
+            {state?.error && (
+              <div className="text-red-400 text-xs text-center font-medium bg-black/20 py-1 rounded-md">{state.error}</div>
+            )}
 
-          <div>
             <Button
               type="submit"
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               disabled={pending}
+              className="w-full h-12 login-btn-gradient text-white font-semibold text-lg rounded-full shadow-lg shadow-blue-500/20"
             >
               {pending ? (
-                <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  Loading...
-                </>
-              ) : mode === 'signin' ? (
-                'Sign in'
+                <Loader2 className="animate-spin h-5 w-5" />
               ) : (
-                'Sign up'
+                mode === 'signin' ? 'Ingresar' : 'Registrarse'
               )}
             </Button>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
-                {mode === 'signin'
-                  ? 'New to our platform?'
-                  : 'Already have an account?'}
-              </span>
-            </div>
+          <div className="mt-8 flex flex-col items-center gap-2 text-[10px] md:text-xs text-white/90 font-medium tracking-wider uppercase">
+            <Link href="#" className="hover:underline">¿OLVIDASTE TU CONTRASEÑA?</Link>
+            <Link href="#" className="hover:underline">¿NECESITAS AYUDA? CONTÁCTANOS</Link>
           </div>
 
           <div className="mt-6">
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${
-                redirect ? `?redirect=${redirect}` : ''
-              }${priceId ? `&priceId=${priceId}` : ''}`}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${redirect ? `?redirect=${redirect}` : ''}`}
+              className="text-xs text-white/70 hover:text-white underline transition-colors"
             >
-              {mode === 'signin'
-                ? 'Create an account'
-                : 'Sign in to existing account'}
+              {mode === 'signin' ? 'Crear una cuenta' : 'Ya tengo una cuenta'}
             </Link>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-20 w-full flex flex-col md:flex-row justify-between items-center px-4 py-6 md:px-12 text-[10px] md:text-xs text-white font-medium tracking-wide">
+        <div className="flex gap-4 mb-2 md:mb-0">
+          <Link href="#" className="hover:underline uppercase">AVISO DE PRIVACIDAD</Link>
+          <Link href="#" className="hover:underline uppercase">ETHOS</Link>
+        </div>
+
+        <div className="opacity-90">
+          © 2026 <span className="text-blue-400 font-bold">Tecnológico de Monterrey.</span>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function InscriptionPage() {
             if (selectedSlots.length < 3) {
                 setSelectedSlots([...selectedSlots, slot]);
             } else {
-                alert('You can select a maximum of 3 schedules.');
+                alert('Puedes seleccionar un máximo de 3 horarios.');
             }
         }
     };
@@ -51,10 +51,10 @@ export default function InscriptionPage() {
         <section className="flex flex-col items-center justify-center py-12">
             <div className="max-w-2xl w-full px-4 sm:px-6 lg:px-8 bg-white p-8 rounded-xl shadow-lg">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-                    School Inscription
+                    Inscripción a la feria
                 </h1>
                 <p className="text-gray-600 mb-8 text-center">
-                    Select up to 3 time slots for your inscription.
+                    Selecciona hasta 3 horarios para tu inscripción.
                 </p>
 
                 <div className="grid grid-cols-3 gap-4 mb-8">
@@ -83,10 +83,10 @@ export default function InscriptionPage() {
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
+                                Guardando...
                             </>
                         ) : (
-                            'Confirm Inscription'
+                            'Confirmar Inscripción'
                         )}
                     </Button>
                 </div>

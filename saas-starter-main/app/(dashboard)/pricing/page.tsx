@@ -1,37 +1,9 @@
 import { Check } from 'lucide-react';
 import { SubmitButton } from './submit-button';
-
-
+import { redirect } from 'next/navigation';
 
 export default function PricingPage() {
-  return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
-        <PricingCard
-          name="Base"
-          price={800}
-          interval="month"
-          trialDays={7}
-          features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
-            'Email Support',
-          ]}
-        />
-        <PricingCard
-          name="Plus"
-          price={1200}
-          interval="month"
-          trialDays={7}
-          features={[
-            'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
-          ]}
-        />
-      </div>
-    </main>
-  );
+  redirect('/sign-in');
 }
 
 function PricingCard({

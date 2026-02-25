@@ -272,4 +272,18 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* MiTec Login Styles */
+  .login-overlay {
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
+  }
+
+  .login-input-focus:focus-within {
+    @apply ring-2 ring-blue-400 border-transparent;
+  }
+
+  .login-btn-gradient {
+    background: linear-gradient(to right, #2196f3, #00BCD4);
+    @apply hover:opacity-90 transition-opacity;
+  }
 }
