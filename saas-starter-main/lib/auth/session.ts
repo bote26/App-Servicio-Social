@@ -1,7 +1,7 @@
 import { compare, hash } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { NewUser } from '@/lib/db/schema';
+import { NewUsuario } from '@/lib/db/schema';
 
 const key = new TextEncoder().encode(process.env.AUTH_SECRET);
 const SALT_ROUNDS = 10;
@@ -19,6 +19,7 @@ export async function comparePasswords(
 
 type SessionData = {
   user: { id: number };
+  role: string;
   expires: string;
 };
 
@@ -43,10 +44,11 @@ export async function getSession() {
   return await verifyToken(session);
 }
 
-export async function setSession(user: NewUser) {
+export async function setSession(user: NewUsuario & { id: number; rol: string }) {
   const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const session: SessionData = {
-    user: { id: user.id! },
+    user: { id: user.id },
+    role: user.rol,
     expires: expiresInOneDay.toISOString(),
   };
   const encryptedSession = await signToken(session);

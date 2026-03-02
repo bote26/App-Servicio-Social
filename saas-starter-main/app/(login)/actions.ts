@@ -4,13 +4,14 @@ import { z } from 'zod';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import {
-  User,
-  users,
+  Usuario,
+  usuarios,
   activityLogs,
-  type NewUser,
+  type NewUsuario,
   type NewActivityLog,
   ActivityType,
-  registrations
+  preRegistroFeria,
+  UserRole,
 } from '@/lib/db/schema';
 import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
@@ -44,8 +45,8 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 
   const foundUser = await db
     .select()
-    .from(users)
-    .where(eq(users.email, email))
+    .from(usuarios)
+    .where(eq(usuarios.correoInstitucional, email))
     .limit(1)
     .then(res => res[0]);
 
@@ -71,56 +72,72 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
   }
 
   await Promise.all([
-    setSession(foundUser),
+    setSession({ ...foundUser, id: foundUser.id, rol: foundUser.rol }),
     logActivity(foundUser.id, ActivityType.SIGN_IN)
   ]);
 
-  if (foundUser.role === 'student') {
-    const userRegistrations = await db
-      .select()
-      .from(registrations)
-      .where(eq(registrations.userId, foundUser.id))
-      .limit(1);
-
-    if (userRegistrations.length === 0) {
-      redirect('/dashboard/inscription');
-    }
+  if (foundUser.rol === UserRole.ADMIN) {
+    redirect('/admin');
+  } else if (foundUser.rol === UserRole.STAFF) {
+    redirect('/admin/validation');
+  } else if (foundUser.rol === UserRole.SOCIOFORMADOR) {
+    redirect('/socioformador');
+  } else {
+    redirect('/dashboard');
   }
-
-  redirect('/dashboard');
 });
 
 const signUpSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
+  matricula: z.string().min(1).max(20).optional(),
+  nombreCompleto: z.string().min(1).max(150).optional(),
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
-  const { email, password } = data;
+  const { email, password, matricula, nombreCompleto } = data;
 
   const existingUser = await db
     .select()
-    .from(users)
-    .where(eq(users.email, email))
+    .from(usuarios)
+    .where(eq(usuarios.correoInstitucional, email))
     .limit(1);
 
   if (existingUser.length > 0) {
     return {
-      error: 'Error al crear el usuario. Por favor, inténtalo de nuevo.',
+      error: 'Este correo ya está registrado. Por favor, inicia sesión.',
       email,
       password
     };
   }
 
+  if (matricula) {
+    const existingMatricula = await db
+      .select()
+      .from(usuarios)
+      .where(eq(usuarios.matricula, matricula))
+      .limit(1);
+
+    if (existingMatricula.length > 0) {
+      return {
+        error: 'Esta matrícula ya está registrada.',
+        email,
+        password
+      };
+    }
+  }
+
   const passwordHash = await hashPassword(password);
 
-  const newUser: NewUser = {
-    email,
+  const newUser: NewUsuario = {
+    correoInstitucional: email,
     passwordHash,
-    role: 'student',
+    rol: UserRole.STUDENT,
+    matricula: matricula || null,
+    nombreCompleto: nombreCompleto || null,
   };
 
-  const [createdUser] = await db.insert(users).values(newUser).returning();
+  const [createdUser] = await db.insert(usuarios).values(newUser).returning();
 
   if (!createdUser) {
     return {
@@ -130,13 +147,16 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
     };
   }
 
-  await setSession(createdUser);
+  await Promise.all([
+    setSession({ ...createdUser, id: createdUser.id, rol: createdUser.rol }),
+    logActivity(createdUser.id, ActivityType.SIGN_UP)
+  ]);
 
-  redirect('/dashboard/inscription');
+  redirect('/dashboard/fair-registration');
 });
 
 export async function signOut() {
-  const user = (await getUser()) as User;
+  const user = await getUser();
   if (user) {
     await logActivity(user.id, ActivityType.SIGN_OUT);
   }
@@ -190,9 +210,9 @@ export const updatePassword = validatedActionWithUser(
 
     await Promise.all([
       db
-        .update(users)
+        .update(usuarios)
         .set({ passwordHash: newPasswordHash })
-        .where(eq(users.id, user.id)),
+        .where(eq(usuarios.id, user.id)),
       logActivity(user.id, ActivityType.UPDATE_PASSWORD)
     ]);
 
@@ -219,19 +239,15 @@ export const deleteAccount = validatedActionWithUser(
       };
     }
 
-    await logActivity(
-      user.id,
-      ActivityType.DELETE_ACCOUNT
-    );
+    await logActivity(user.id, ActivityType.DELETE_ACCOUNT);
 
-    // Soft delete
     await db
-      .update(users)
+      .update(usuarios)
       .set({
         deletedAt: sql`CURRENT_TIMESTAMP`,
-        email: sql`CONCAT(email, '-', id, '-deleted')` // Ensure email uniqueness
+        correoInstitucional: sql`CONCAT(correo_institucional, '-', id, '-deleted')`
       })
-      .where(eq(users.id, user.id));
+      .where(eq(usuarios.id, user.id));
 
     (await cookies()).delete('session');
     redirect('/sign-in');
@@ -239,20 +255,30 @@ export const deleteAccount = validatedActionWithUser(
 );
 
 const updateAccountSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio').max(100),
-  email: z.string().email('Correo electrónico no válido')
+  nombreCompleto: z.string().min(1, 'El nombre es obligatorio').max(150),
+  correoInstitucional: z.string().email('Correo electrónico no válido'),
+  matricula: z.string().max(20).optional(),
+  numeroPersonal: z.string().max(30).optional(),
+  correoAlternativo: z.string().email().optional().or(z.literal('')),
 });
 
 export const updateAccount = validatedActionWithUser(
   updateAccountSchema,
   async (data, _, user) => {
-    const { name, email } = data;
+    const { nombreCompleto, correoInstitucional, matricula, numeroPersonal, correoAlternativo } = data;
 
     await Promise.all([
-      db.update(users).set({ name, email }).where(eq(users.id, user.id)),
+      db.update(usuarios).set({ 
+        nombreCompleto, 
+        correoInstitucional,
+        matricula: matricula || null,
+        numeroPersonal: numeroPersonal || null,
+        correoAlternativo: correoAlternativo || null,
+        updatedAt: new Date(),
+      }).where(eq(usuarios.id, user.id)),
       logActivity(user.id, ActivityType.UPDATE_ACCOUNT)
     ]);
 
-    return { name, success: 'Cuenta actualizada exitosamente.' };
+    return { nombreCompleto, success: 'Cuenta actualizada exitosamente.' };
   }
 );

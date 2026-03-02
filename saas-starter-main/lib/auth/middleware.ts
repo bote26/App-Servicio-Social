@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { User } from '@/lib/db/schema';
+import { Usuario } from '@/lib/db/schema';
 import { getUser } from '@/lib/db/queries';
 
 export type ActionState = {
   error?: string;
   success?: string;
-  [key: string]: any; // This allows for additional properties
+  [key: string]: any;
 };
 
 type ValidatedActionFunction<S extends z.ZodType<any, any>, T> = (
@@ -30,7 +30,7 @@ export function validatedAction<S extends z.ZodType<any, any>, T>(
 type ValidatedActionWithUserFunction<S extends z.ZodType<any, any>, T> = (
   data: z.infer<S>,
   formData: FormData,
-  user: User
+  user: Usuario
 ) => Promise<T>;
 
 export function validatedActionWithUser<S extends z.ZodType<any, any>, T>(
@@ -50,4 +50,41 @@ export function validatedActionWithUser<S extends z.ZodType<any, any>, T>(
 
     return action(result.data, formData, user);
   };
+}
+
+export function requireRole(allowedRoles: string[]) {
+  return async () => {
+    const user = await getUser();
+    if (!user) {
+      throw new Error('User is not authenticated');
+    }
+    if (!allowedRoles.includes(user.rol)) {
+      throw new Error('Access denied');
+    }
+    return user;
+  };
+}
+
+export async function requireAdmin() {
+  const user = await getUser();
+  if (!user || user.rol !== 'admin') {
+    throw new Error('Admin access required');
+  }
+  return user;
+}
+
+export async function requireStaffOrAdmin() {
+  const user = await getUser();
+  if (!user || (user.rol !== 'admin' && user.rol !== 'staff')) {
+    throw new Error('Staff access required');
+  }
+  return user;
+}
+
+export async function requireSocioformador() {
+  const user = await getUser();
+  if (!user || (user.rol !== 'admin' && user.rol !== 'socioformador')) {
+    throw new Error('Socioformador access required');
+  }
+  return user;
 }

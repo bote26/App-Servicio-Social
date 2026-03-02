@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Settings, Shield, Activity, Menu, Calendar } from 'lucide-react';
+import { Settings, Activity, Menu, Calendar, FileText, ClipboardList, CheckCircle } from 'lucide-react';
 
 export default function DashboardLayout({
   children
@@ -22,10 +22,11 @@ export default function DashboardLayout({
   }, [pathname, router]);
 
   const navItems = [
-    { href: '/dashboard/general', icon: Settings, label: 'General' },
+    { href: '/dashboard/general', icon: Settings, label: 'Mi Perfil' },
+    { href: '/dashboard/fair-registration', icon: ClipboardList, label: 'Registro Feria' },
+    { href: '/dashboard/projects', icon: Calendar, label: 'Proyectos' },
+    { href: '/dashboard/my-enrollments', icon: CheckCircle, label: 'Mis Inscripciones' },
     { href: '/dashboard/activity', icon: Activity, label: 'Actividad' },
-    { href: '/dashboard/offers', icon: Calendar, label: 'Ofertas' },
-    { href: '/dashboard/inscription', icon: Calendar, label: 'Mis Inscripciones' }
   ];
 
   return (
@@ -33,7 +34,7 @@ export default function DashboardLayout({
       {/* Mobile header */}
       <div className="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4">
         <div className="flex items-center">
-          <span className="font-medium">Configuración</span>
+          <span className="font-medium">Mi Panel</span>
         </div>
         <Button
           className="-mr-3"
@@ -53,6 +54,11 @@ export default function DashboardLayout({
             }`}
         >
           <nav className="h-full overflow-y-auto p-4">
+            <div className="mb-4 px-3">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Estudiante
+              </h2>
+            </div>
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} passHref>
                 <Button
@@ -61,7 +67,7 @@ export default function DashboardLayout({
                     }`}
                   onClick={() => setIsSidebarOpen(false)}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="mr-2 h-4 w-4" />
                   {item.label}
                 </Button>
               </Link>

@@ -1,59 +1,50 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Settings,
-  LogOut,
-  UserPlus,
-  Lock,
-  UserCog,
-  AlertCircle,
-  UserMinus,
-  Mail,
-  CheckCircle,
-  type LucideIcon,
-} from 'lucide-react';
-import { ActivityType } from '@/lib/db/schema';
 import { getActivityLogs } from '@/lib/db/queries';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity, LogIn, LogOut, UserPlus, Key, Trash, UserCog, Calendar, CheckCircle, FileText } from 'lucide-react';
 
-const iconMap: Record<ActivityType, LucideIcon> = {
-  [ActivityType.SIGN_UP]: UserPlus,
-  [ActivityType.SIGN_IN]: UserCog,
-  [ActivityType.SIGN_OUT]: LogOut,
-  [ActivityType.UPDATE_PASSWORD]: Lock,
-  [ActivityType.DELETE_ACCOUNT]: UserMinus,
-  [ActivityType.UPDATE_ACCOUNT]: Settings,
+const activityIcons: Record<string, any> = {
+  SIGN_UP: UserPlus,
+  SIGN_IN: LogIn,
+  SIGN_OUT: LogOut,
+  UPDATE_PASSWORD: Key,
+  DELETE_ACCOUNT: Trash,
+  UPDATE_ACCOUNT: UserCog,
+  FAIR_REGISTRATION: Calendar,
+  PHYSICAL_VALIDATION: CheckCircle,
+  PROJECT_ENROLLMENT: FileText,
+  CODE_USED: Key,
 };
 
-function getRelativeTime(date: Date) {
+const activityLabels: Record<string, string> = {
+  SIGN_UP: 'Registro de cuenta',
+  SIGN_IN: 'Inicio de sesión',
+  SIGN_OUT: 'Cierre de sesión',
+  UPDATE_PASSWORD: 'Contraseña actualizada',
+  DELETE_ACCOUNT: 'Cuenta eliminada',
+  UPDATE_ACCOUNT: 'Cuenta actualizada',
+  FAIR_REGISTRATION: 'Registro a feria',
+  PHYSICAL_VALIDATION: 'Validación física',
+  PROJECT_ENROLLMENT: 'Inscripción a proyecto',
+  CODE_USED: 'Código utilizado',
+};
+
+function formatTimeAgo(date: Date): string {
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffInSeconds < 60) return 'hace un momento';
-  if (diffInSeconds < 3600)
-    return `hace ${Math.floor(diffInSeconds / 60)} minutos`;
-  if (diffInSeconds < 86400)
-    return `hace ${Math.floor(diffInSeconds / 3600)} horas`;
-  if (diffInSeconds < 604800)
-    return `hace ${Math.floor(diffInSeconds / 86400)} días`;
-  return date.toLocaleDateString();
-}
-
-function formatAction(action: ActivityType): string {
-  switch (action) {
-    case ActivityType.SIGN_UP:
-      return 'Te registraste';
-    case ActivityType.SIGN_IN:
-      return 'Iniciaste sesión';
-    case ActivityType.SIGN_OUT:
-      return 'Cerraste sesión';
-    case ActivityType.UPDATE_PASSWORD:
-      return 'Cambiaste tu contraseña';
-    case ActivityType.DELETE_ACCOUNT:
-      return 'Eliminaste tu cuenta';
-    case ActivityType.UPDATE_ACCOUNT:
-      return 'Actualizaste tu cuenta';
-    default:
-      return 'Ocurrió una acción desconocida';
-  }
+  if (diffMins < 1) return 'Hace un momento';
+  if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+  if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+  
+  return date.toLocaleDateString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 export default async function ActivityPage() {
@@ -62,49 +53,44 @@ export default async function ActivityPage() {
   return (
     <section className="flex-1 p-4 lg:p-8">
       <h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
-        Registro de Actividad
+        Mi Actividad
       </h1>
-      <Card>
+
+      <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>Actividad Reciente</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Actividad Reciente
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {logs.length > 0 ? (
-            <ul className="space-y-4">
+          {logs.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No hay actividad registrada
+            </p>
+          ) : (
+            <div className="space-y-4">
               {logs.map((log) => {
-                const Icon = iconMap[log.action as ActivityType] || Settings;
-                const formattedAction = formatAction(
-                  log.action as ActivityType
-                );
-
+                const Icon = activityIcons[log.action] || Activity;
+                const label = activityLabels[log.action] || log.action;
+                
                 return (
-                  <li key={log.id} className="flex items-center space-x-4">
-                    <div className="bg-orange-100 rounded-full p-2">
-                      <Icon className="w-5 h-5 text-orange-600" />
+                  <div 
+                    key={log.id} 
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Icon className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {formattedAction}
-                        {log.ipAddress && ` desde la IP ${log.ipAddress}`}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {getRelativeTime(new Date(log.timestamp))}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">{label}</p>
+                      <p className="text-sm text-gray-500">
+                        {formatTimeAgo(new Date(log.timestamp))}
                       </p>
                     </div>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-center py-12">
-              <AlertCircle className="h-12 w-12 text-orange-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Aún no hay actividad
-              </h3>
-              <p className="text-sm text-gray-500 max-w-sm">
-                Cuando realices acciones como iniciar sesión o actualizar tu
-                cuenta, aparecerán aquí.
-              </p>
             </div>
           )}
         </CardContent>

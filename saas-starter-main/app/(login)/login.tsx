@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, User, Lock, Apple, PlayCircle, Twitter, Facebook, Instagram, Youtube } from 'lucide-react';
+import { Loader2, User, Lock, Apple, PlayCircle, Twitter, Facebook, Instagram, Youtube, IdCard } from 'lucide-react';
 import { signIn, signUp } from './actions';
 import { ActionState } from '@/lib/auth/middleware';
 import { TecLogo, MiTecLogo } from '@/components/tec-logo';
@@ -66,9 +66,25 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 defaultValue={state.email}
                 required
                 className="w-full h-11 pl-12 pr-4 bg-white/90 backdrop-blur-sm border-none rounded-full text-gray-800 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-blue-400"
-                placeholder={mode === 'signin' ? "A0166354" : "Email"}
+                placeholder={mode === 'signin' ? "correo@tec.mx" : "Correo institucional"}
               />
             </div>
+
+            {mode === 'signup' && (
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">
+                  <IdCard size={18} />
+                </div>
+                <Input
+                  id="matricula"
+                  name="matricula"
+                  type="text"
+                  autoComplete="off"
+                  className="w-full h-11 pl-12 pr-4 bg-white/90 backdrop-blur-sm border-none rounded-full text-gray-800 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-blue-400"
+                  placeholder="Matrícula (ej: A01234567)"
+                />
+              </div>
+            )}
 
             <div className="relative group">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">

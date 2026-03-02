@@ -7,68 +7,110 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { updateAccount } from '@/app/(login)/actions';
-import { User } from '@/lib/db/schema';
 import useSWR from 'swr';
 import { Suspense } from 'react';
+
+interface UserData {
+  id: number;
+  email: string;
+  name: string | null;
+  matricula: string | null;
+  numeroPersonal: string | null;
+  correoAlternativo: string | null;
+}
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 type ActionState = {
-  name?: string;
+  nombreCompleto?: string;
   error?: string;
   success?: string;
 };
 
-type AccountFormProps = {
-  state: ActionState;
-  nameValue?: string;
-  emailValue?: string;
-};
-
-function AccountForm({
-  state,
-  nameValue = '',
-  emailValue = ''
-}: AccountFormProps) {
+function AccountFormWithData({ state }: { state: ActionState }) {
+  const { data: user } = useSWR<UserData>('/api/user', fetcher);
+  
   return (
     <>
-      <div>
-        <Label htmlFor="name" className="mb-2">
-          Nombre
-        </Label>
-        <Input
-          id="name"
-          name="name"
-          placeholder="Ingresa tu nombre"
-          defaultValue={state.name || nameValue}
-          required
-        />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <Label htmlFor="nombreCompleto" className="mb-2">
+            Nombre Completo *
+          </Label>
+          <Input
+            id="nombreCompleto"
+            name="nombreCompleto"
+            placeholder="Tu nombre completo"
+            defaultValue={state.nombreCompleto || user?.name || ''}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="correoInstitucional" className="mb-2">
+            Correo Institucional *
+          </Label>
+          <Input
+            id="correoInstitucional"
+            name="correoInstitucional"
+            type="email"
+            placeholder="correo@tec.mx"
+            defaultValue={user?.email || ''}
+            required
+          />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <Label htmlFor="matricula" className="mb-2">
+            Matrícula
+          </Label>
+          <Input
+            id="matricula"
+            name="matricula"
+            placeholder="A01234567"
+            defaultValue={user?.matricula || ''}
+          />
+        </div>
+        <div>
+          <Label htmlFor="numeroPersonal" className="mb-2">
+            Número Personal (INE)
+          </Label>
+          <Input
+            id="numeroPersonal"
+            name="numeroPersonal"
+            placeholder="1234567890"
+            defaultValue={user?.numeroPersonal || ''}
+          />
+        </div>
       </div>
       <div>
-        <Label htmlFor="email" className="mb-2">
-          Correo electrónico
+        <Label htmlFor="correoAlternativo" className="mb-2">
+          Correo Alternativo
         </Label>
         <Input
-          id="email"
-          name="email"
+          id="correoAlternativo"
+          name="correoAlternativo"
           type="email"
-          placeholder="Ingresa tu correo"
-          defaultValue={emailValue}
-          required
+          placeholder="correo@ejemplo.com"
+          defaultValue={user?.correoAlternativo || ''}
         />
       </div>
     </>
   );
 }
 
-function AccountFormWithData({ state }: { state: ActionState }) {
-  const { data: user } = useSWR<User>('/api/user', fetcher);
+function AccountFormSkeleton() {
   return (
-    <AccountForm
-      state={state}
-      nameValue={user?.name ?? ''}
-      emailValue={user?.email ?? ''}
-    />
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="h-10 bg-gray-100 rounded animate-pulse" />
+        <div className="h-10 bg-gray-100 rounded animate-pulse" />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="h-10 bg-gray-100 rounded animate-pulse" />
+        <div className="h-10 bg-gray-100 rounded animate-pulse" />
+      </div>
+    </div>
   );
 }
 
@@ -81,27 +123,29 @@ export default function GeneralPage() {
   return (
     <section className="flex-1 p-4 lg:p-8">
       <h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
-        Configuración General
+        Mi Perfil
       </h1>
 
-      <Card>
+      <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>Información de la Cuenta</CardTitle>
+          <CardTitle>Información Personal</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" action={formAction}>
-            <Suspense fallback={<AccountForm state={state} />}>
+            <Suspense fallback={<AccountFormSkeleton />}>
               <AccountFormWithData state={state} />
             </Suspense>
+            
             {state.error && (
               <p className="text-red-500 text-sm">{state.error}</p>
             )}
             {state.success && (
               <p className="text-green-500 text-sm">{state.success}</p>
             )}
+            
             <Button
               type="submit"
-              className="bg-orange-500 hover:bg-orange-600 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               disabled={isPending}
             >
               {isPending ? (

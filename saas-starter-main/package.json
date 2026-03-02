@@ -6,9 +6,10 @@
     "start": "next start",
     "db:setup": "npx tsx lib/db/setup.ts",
     "db:seed": "npx tsx lib/db/seed.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "npx drizzle-kit migrate",
+    "db:push": "npx drizzle-kit push",
+    "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.1.7",
@@ -23,6 +24,7 @@
     "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.43.1",
     "jose": "^6.0.11",
+    "jspdf": "^4.2.0",
     "lucide-react": "^0.511.0",
     "next": "15.6.0-canary.59",
     "postcss": "^8.5.3",
