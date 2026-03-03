@@ -310,25 +310,29 @@ export default function FairRegistrationPage() {
                 </span>
               </div>
               <p className="text-sm text-gray-600">
-                Puedes seleccionar múltiples horarios en los que podrías asistir a la feria.
+                Puedes seleccionar hasta 3 horarios en los que podrías asistir a la feria.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {TIME_SLOTS.map((slot) => {
                   const isSelected = selectedHorarios.includes(slot);
+                  const isDisabled = !isSelected && selectedHorarios.length >= 3;
                   return (
                     <label
                       key={slot}
-                      className={`flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all text-sm ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`flex items-center justify-center p-3 rounded-lg border-2 transition-all text-sm ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                        : isDisabled
+                        ? 'border-gray-200 opacity-50 cursor-not-allowed'
+                        : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                    }`}
                     >
                       <input
                         type="checkbox"
                         name="horarios"
                         value={slot}
                         checked={isSelected}
+                        disabled={!isSelected && selectedHorarios.length >= 3}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSelectedHorarios([...selectedHorarios, slot]);
