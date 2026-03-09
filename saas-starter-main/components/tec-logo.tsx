@@ -61,18 +61,51 @@ export function TecLogo({ className = '', white = true }: { className?: string; 
 
 export function MiTecLogo({ className = '' }: { className?: string }) {
     return (
-        <div className={`flex flex-col items-center ${className}`}>
-            {/* Colorful bars */}
-            <div className="flex gap-[3px] mb-2">
-                <div className="w-[10px] h-[45px] rounded-sm bg-[#E4002B]" />
-                <div className="w-[10px] h-[45px] rounded-sm bg-[#FFD100]" />
-                <div className="w-[10px] h-[45px] rounded-sm bg-[#00B2A9]" />
-                <div className="w-[10px] h-[55px] rounded-sm bg-[#0033A0] -mt-[10px]" />
+
+
+        <div className={`flex flex-col gap-2 items-center ${className} p-2  rounded-xl `}>
+            {/* Fila 1 */}
+            <div className="flex gap-2">
+                {/* Turquesa - chaflán superior derecho */}
+                <div 
+                    className="w-[45px] h-[45px] rounded-lg bg-[#1ab0a6]"
+                    style={{ clipPath: 'polygon(0% 0%, 75% 0%, 100% 25%, 100% 100%, 0% 100%)' }}
+                />
+                {/* Naranja - chaflán inferior izquierdo */}
+                <div 
+                    className="w-[45px] h-[45px] rounded-lg bg-[#ff9c00]"
+                    style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 25% 100%, 0% 75%)' }}
+                />
+            </div>
+
+            {/* Fila 2 */}
+            <div className="flex gap-2">
+                {/* Coral - chaflán superior izquierdo */}
+                <div 
+                    className="w-[45px] h-[45px] rounded-lg bg-[#ff7e5f]"
+                    style={{ clipPath: 'polygon(25% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 25%)' }}
+                />
+                {/* Violeta - chaflán inferior derecho */}
+                <div 
+                    className="w-[45px] h-[45px] rounded-lg bg-[#9d4edd]"
+                    style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 0% 100%)' }}
+                />
+            </div>
+
+            {/* Fila 3 */}
+            <div className="flex gap-2">
+                {/* Círculo negro */}
+                <div className="w-[45px] h-[45px] rounded-full bg-[#000000]" />
+                {/* Azul claro - chaflán inferior izquierdo */}
+                <div 
+                    className="w-[45px] h-[45px] rounded-lg bg-[#5dc1d9]"
+                    style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 25% 100%, 0% 75%)' }}
+                />
             </div>
             {/* mi tec text */}
             <div className="flex items-baseline gap-1">
-                <span className="text-white text-xl font-light tracking-wide">mi</span>
-                <span className="text-white text-2xl font-bold tracking-wide">tec</span>
+                <span className="text-white text-xl font-light tracking-wide">Servicio</span>
+                <span className="text-white text-2xl font-bold tracking-wide">Social</span>
             </div>
         </div>
     );
