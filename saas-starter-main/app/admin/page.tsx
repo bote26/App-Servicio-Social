@@ -1,17 +1,21 @@
-import { getDashboardStats, getActiveEvents, getAllProjects } from '@/lib/db/queries';
+import { getDashboardStats, getActiveEvents, getAllProjects, getEnrollmentsByProject, getEnrollmentTrend } from '@/lib/db/queries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Users, CheckCircle, FolderKanban, 
-  TrendingUp, Calendar 
+import {
+  Users, CheckCircle, FolderKanban,
+  TrendingUp, Calendar, BarChart2, LineChart as LineChartIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import EnrollmentChart from './_components/enrollment-chart';
+import EnrollmentTrendChart from './_components/enrollment-trend-chart';
 
 export default async function AdminDashboardPage() {
   const events = await getActiveEvents();
   const activeEventId = events[0]?.id;
   const stats = await getDashboardStats(activeEventId);
   const projects = await getAllProjects();
+  const enrollmentsByProject = await getEnrollmentsByProject();
+  const enrollmentTrend = await getEnrollmentTrend(30);
 
   const recentProjects = projects.slice(0, 5);
 
@@ -126,6 +130,33 @@ export default async function AdminDashboardPage() {
                 </Button>
               </Link>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BarChart2 className="h-5 w-5 text-blue-600" />
+              Inscripciones por Proyecto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EnrollmentChart data={enrollmentsByProject} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <LineChartIcon className="h-5 w-5 text-indigo-600" />
+              Tendencia de Inscripciones (30 días)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EnrollmentTrendChart data={enrollmentTrend} />
           </CardContent>
         </Card>
       </div>

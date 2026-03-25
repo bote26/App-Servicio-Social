@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  KeyRound, Download, Loader2, CheckCircle, Clock, 
-  Copy, AlertCircle, Printer 
+import {
+  KeyRound, Loader2, CheckCircle, Clock,
+  Copy, AlertCircle, Printer, Plus
 } from 'lucide-react';
-import { getMyProjects, getProjectCodesForSocioformador } from '../actions';
+import { getMyProjects, getProjectCodesForSocioformador, generateCodesForMyProject } from '../actions';
 
 interface Project {
   id: number;
@@ -41,6 +41,9 @@ export default function SocioformadorCodesPage() {
   const [codes, setCodes] = useState<CodeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [generateCount, setGenerateCount] = useState(10);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateMsg, setGenerateMsg] = useState('');
 
   useEffect(() => {
     async function loadProjects() {
@@ -79,6 +82,21 @@ export default function SocioformadorCodesPage() {
     await navigator.clipboard.writeText(code);
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedProject) return;
+    setIsGenerating(true);
+    setGenerateMsg('');
+    const result = await generateCodesForMyProject(selectedProject, generateCount);
+    if (result?.error) {
+      setGenerateMsg(`Error: ${result.error}`);
+    } else {
+      setGenerateMsg(`Se generaron ${result.count} códigos correctamente`);
+      const data = await getProjectCodesForSocioformador(selectedProject);
+      setCodes(data as CodeEntry[]);
+    }
+    setIsGenerating(false);
   };
 
   const handlePrint = () => {
@@ -187,6 +205,40 @@ export default function SocioformadorCodesPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Generate Codes */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">Generar Nuevos Códigos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Cantidad:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={generateCount}
+                    onChange={(e) => setGenerateCount(Math.min(100, Math.max(1, Number(e.target.value))))}
+                    className="w-20 h-10 rounded-md border border-gray-200 px-3 text-sm"
+                  />
+                </div>
+                <Button onClick={handleGenerate} disabled={isGenerating} size="sm">
+                  {isGenerating ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generando...</>
+                  ) : (
+                    <><Plus className="h-4 w-4 mr-2" />Generar Códigos</>
+                  )}
+                </Button>
+                {generateMsg && (
+                  <span className={`text-sm ${generateMsg.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                    {generateMsg}
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Codes */}
           <Card>

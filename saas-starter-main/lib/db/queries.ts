@@ -1,4 +1,4 @@
-import { desc, and, eq, isNull, gt, sql } from 'drizzle-orm';
+import { desc, and, eq, isNull, gt, sql, gte } from 'drizzle-orm';
 import { db } from './drizzle';
 import {
   usuarios,
@@ -350,6 +350,61 @@ export async function getEnrollmentByFolio(folio: string) {
 // =============================================================================
 // DASHBOARD STATS QUERIES
 // =============================================================================
+
+// =============================================================================
+// CHART DATA QUERIES
+// =============================================================================
+
+export async function getEnrollmentsByProject() {
+  const results = await db
+    .select({
+      titulo: proyectos.titulo,
+      claveProyecto: proyectos.claveProyecto,
+      cupoTotal: proyectos.cupoTotal,
+      cupoDisponible: proyectos.cupoDisponible,
+      inscritos: sql<number>`(${proyectos.cupoTotal} - ${proyectos.cupoDisponible})`,
+    })
+    .from(proyectos)
+    .where(eq(proyectos.activo, true))
+    .orderBy(sql`(${proyectos.cupoTotal} - ${proyectos.cupoDisponible}) desc`)
+    .limit(10);
+
+  return results.map((r) => ({
+    nombre: r.claveProyecto,
+    titulo: r.titulo,
+    inscritos: Number(r.inscritos),
+    cupoTotal: r.cupoTotal,
+  }));
+}
+
+export async function getEnrollmentTrend(days: number = 30) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const results = await db
+    .select({
+      fecha: sql<string>`DATE(${inscripciones.fechaInscripcion})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(inscripciones)
+    .where(gte(inscripciones.fechaInscripcion, since))
+    .groupBy(sql`DATE(${inscripciones.fechaInscripcion})`)
+    .orderBy(sql`DATE(${inscripciones.fechaInscripcion})`);
+
+  // Build cumulative series filling gaps
+  const map = new Map(results.map((r) => [r.fecha, Number(r.count)]));
+  const trend: { fecha: string; nuevos: number; acumulado: number }[] = [];
+  let acumulado = 0;
+  for (let i = days; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const nuevos = map.get(key) ?? 0;
+    acumulado += nuevos;
+    trend.push({ fecha: key, nuevos, acumulado });
+  }
+  return trend;
+}
 
 export async function getDashboardStats(eventoId?: number) {
   const totalStudents = await db

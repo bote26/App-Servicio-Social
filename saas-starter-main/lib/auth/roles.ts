@@ -32,7 +32,7 @@ export const ROLE_PERMISSIONS = {
     canValidateStudents: false,
     canManageUsers: false,
     canViewAllEnrollments: false,
-    canGenerateCodes: false,
+    canGenerateCodes: true,
   },
   [UserRole.STAFF]: {
     canAccessDashboard: true,

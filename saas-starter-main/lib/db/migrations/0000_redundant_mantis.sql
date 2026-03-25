@@ -1,3 +1,11 @@
+CREATE TABLE "activity_logs" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer,
+	"action" text NOT NULL,
+	"timestamp" timestamp DEFAULT now() NOT NULL,
+	"ip_address" varchar(45)
+);
+--> statement-breakpoint
 CREATE TABLE "codigos_proyecto" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"proyecto_id" integer NOT NULL,
@@ -88,12 +96,7 @@ CREATE TABLE "usuarios" (
 	CONSTRAINT "usuarios_matricula_unique" UNIQUE("matricula")
 );
 --> statement-breakpoint
-ALTER TABLE "registrations" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-ALTER TABLE "users" DISABLE ROW LEVEL SECURITY;--> statement-breakpoint
-DROP TABLE "registrations" CASCADE;--> statement-breakpoint
-DROP TABLE "users" CASCADE;--> statement-breakpoint
-ALTER TABLE "activity_logs" DROP CONSTRAINT "activity_logs_user_id_users_id_fk";
---> statement-breakpoint
+ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_user_id_usuarios_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "codigos_proyecto" ADD CONSTRAINT "codigos_proyecto_proyecto_id_proyectos_id_fk" FOREIGN KEY ("proyecto_id") REFERENCES "public"."proyectos"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "codigos_proyecto" ADD CONSTRAINT "codigos_proyecto_usado_por_alumno_id_usuarios_id_fk" FOREIGN KEY ("usado_por_alumno_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "inscripciones" ADD CONSTRAINT "inscripciones_alumno_id_usuarios_id_fk" FOREIGN KEY ("alumno_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -103,5 +106,4 @@ ALTER TABLE "pre_registro_feria" ADD CONSTRAINT "pre_registro_feria_alumno_id_us
 ALTER TABLE "pre_registro_feria" ADD CONSTRAINT "pre_registro_feria_evento_feria_id_eventos_feria_id_fk" FOREIGN KEY ("evento_feria_id") REFERENCES "public"."eventos_feria"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pre_registro_feria" ADD CONSTRAINT "pre_registro_feria_validado_por_id_usuarios_id_fk" FOREIGN KEY ("validado_por_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "proyectos" ADD CONSTRAINT "proyectos_evento_feria_id_eventos_feria_id_fk" FOREIGN KEY ("evento_feria_id") REFERENCES "public"."eventos_feria"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "proyectos" ADD CONSTRAINT "proyectos_socioformador_id_usuarios_id_fk" FOREIGN KEY ("socioformador_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_user_id_usuarios_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "proyectos" ADD CONSTRAINT "proyectos_socioformador_id_usuarios_id_fk" FOREIGN KEY ("socioformador_id") REFERENCES "public"."usuarios"("id") ON DELETE no action ON UPDATE no action;

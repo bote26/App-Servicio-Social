@@ -4,10 +4,10 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard, Users, FolderKanban, Calendar, 
+import {
+  LayoutDashboard, Users, FolderKanban, Calendar,
   KeyRound, Menu, LogOut, CircleIcon,
-  Settings
+  Settings, ClipboardList, UserCog
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -87,6 +87,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/projects', icon: FolderKanban, label: 'Proyectos' },
     { href: '/admin/events', icon: Calendar, label: 'Eventos' },
     { href: '/admin/codes', icon: KeyRound, label: 'Códigos' },
+    { href: '/admin/enrollments', icon: ClipboardList, label: 'Inscripciones' },
+    { href: '/admin/users', icon: UserCog, label: 'Socios Formadores' },
   ];
 
   const isActive = (href: string, exact?: boolean) => {
