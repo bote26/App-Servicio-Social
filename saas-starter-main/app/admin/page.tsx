@@ -1,4 +1,4 @@
-import { getDashboardStats, getActiveEvents, getAllProjects, getEnrollmentsByProject, getEnrollmentTrend } from '@/lib/db/queries';
+import { getDashboardStats, getActiveEvents, getAllProjects, getEnrollmentsByProject, getEnrollmentTrendByHour } from '@/lib/db/queries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Users, CheckCircle, FolderKanban,
@@ -15,7 +15,7 @@ export default async function AdminDashboardPage() {
   const stats = await getDashboardStats(activeEventId);
   const projects = await getAllProjects();
   const enrollmentsByProject = await getEnrollmentsByProject();
-  const enrollmentTrend = await getEnrollmentTrend(30);
+  const enrollmentTrend = await getEnrollmentTrendByHour();
 
   const recentProjects = projects.slice(0, 5);
 
@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <LineChartIcon className="h-5 w-5 text-indigo-600" />
-              Tendencia de Inscripciones (30 días)
+              Inscripciones por Hora (hoy)
             </CardTitle>
           </CardHeader>
           <CardContent>

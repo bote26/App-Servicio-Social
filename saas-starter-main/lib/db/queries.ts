@@ -406,6 +406,106 @@ export async function getEnrollmentTrend(days: number = 30) {
   return trend;
 }
 
+export async function getEnrollmentTrendByHour() {
+  const results = await db
+    .select({
+      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(inscripciones)
+    .where(sql`DATE(${inscripciones.fechaInscripcion}) = CURRENT_DATE`)
+    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`)
+    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`);
+
+  const map = new Map(results.map((r) => [Number(r.hora), Number(r.count)]));
+  const trend: { hora: string; nuevos: number; acumulado: number }[] = [];
+  let acumulado = 0;
+  for (let h = 0; h < 24; h++) {
+    const nuevos = map.get(h) ?? 0;
+    acumulado += nuevos;
+    trend.push({ hora: `${String(h).padStart(2, '0')}:00`, nuevos, acumulado });
+  }
+  return trend;
+}
+
+export async function getSocioformadorStats(userId: number) {
+  const alumnosResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(inscripciones)
+    .innerJoin(proyectos, eq(inscripciones.proyectoId, proyectos.id))
+    .where(and(eq(proyectos.socioformadorId, userId), eq(proyectos.activo, true)));
+
+  const slotsResult = await db
+    .select({ total: sql<number>`sum(${proyectos.cupoDisponible})` })
+    .from(proyectos)
+    .where(and(eq(proyectos.socioformadorId, userId), eq(proyectos.activo, true)));
+
+  const codesResult = await db
+    .select({
+      total: sql<number>`count(*)`,
+      usados: sql<number>`sum(case when ${codigosProyecto.usado} then 1 else 0 end)`,
+    })
+    .from(codigosProyecto)
+    .innerJoin(proyectos, eq(codigosProyecto.proyectoId, proyectos.id))
+    .where(eq(proyectos.socioformadorId, userId));
+
+  const activeResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(proyectos)
+    .where(and(eq(proyectos.socioformadorId, userId), eq(proyectos.activo, true)));
+
+  return {
+    totalAlumnos: Number(alumnosResult[0]?.count ?? 0),
+    cuposDisponibles: Number(slotsResult[0]?.total ?? 0),
+    codigosUsados: Number(codesResult[0]?.usados ?? 0),
+    codigosTotal: Number(codesResult[0]?.total ?? 0),
+    proyectosActivos: Number(activeResult[0]?.count ?? 0),
+  };
+}
+
+export async function getSocioformadorProjectsCapacity(userId: number) {
+  const results = await db
+    .select({
+      claveProyecto: proyectos.claveProyecto,
+      titulo: proyectos.titulo,
+      cupoTotal: proyectos.cupoTotal,
+      cupoDisponible: proyectos.cupoDisponible,
+    })
+    .from(proyectos)
+    .where(and(eq(proyectos.socioformadorId, userId), eq(proyectos.activo, true)));
+
+  return results.map((r) => ({
+    nombre: r.claveProyecto,
+    titulo: r.titulo,
+    inscritos: r.cupoTotal - r.cupoDisponible,
+    disponibles: r.cupoDisponible,
+  }));
+}
+
+export async function getSocioformadorEnrollmentsByHour(userId: number) {
+  const results = await db
+    .select({
+      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(inscripciones)
+    .innerJoin(proyectos, eq(inscripciones.proyectoId, proyectos.id))
+    .where(
+      and(
+        eq(proyectos.socioformadorId, userId),
+        sql`DATE(${inscripciones.fechaInscripcion}) = CURRENT_DATE`
+      )
+    )
+    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`)
+    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`);
+
+  const map = new Map(results.map((r) => [Number(r.hora), Number(r.count)]));
+  return Array.from({ length: 24 }, (_, h) => ({
+    hora: `${String(h).padStart(2, '0')}:00`,
+    nuevos: map.get(h) ?? 0,
+  }));
+}
+
 export async function getDashboardStats(eventoId?: number) {
   const totalStudents = await db
     .select({ count: sql<number>`count(*)` })
