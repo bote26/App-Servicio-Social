@@ -14,6 +14,7 @@ import {
   KeyRound
 } from 'lucide-react';
 import { getProjectDetails, checkStudentEligibility, enrollInProject } from '../actions';
+import CertificateButton from '../../my-enrollments/_components/certificate-button';
 
 interface Project {
   id: number;
@@ -140,11 +141,17 @@ export default function ProjectDetailPage() {
               </ul>
             </div>
 
-            <div className="flex gap-3 justify-center">
+            <div className="flex flex-wrap gap-3 justify-center">
+              <CertificateButton
+                folio={success.folio}
+                variant="default"
+                size="default"
+                className="bg-green-600 hover:bg-green-700 text-white"
+              />
               <Button asChild variant="outline">
                 <Link href="/dashboard/projects">Ver más proyectos</Link>
               </Button>
-              <Button asChild>
+              <Button asChild variant="outline">
                 <Link href="/dashboard/my-enrollments">Ver mis inscripciones</Link>
               </Button>
             </div>

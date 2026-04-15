@@ -160,3 +160,109 @@ export async function getSocioformadores() {
     .from(usuarios)
     .where(eq(usuarios.rol, UserRole.SOCIOFORMADOR));
 }
+
+// ── CSV bulk import ───────────────────────────────────────────────────────────
+
+export interface CsvImportResult {
+  created: number;
+  skipped: string[];   // claves that already existed
+  errors: { row: number; clave: string; message: string }[];
+}
+
+/**
+ * Receives a JSON-serialised array of raw row objects (string values) parsed
+ * client-side from the CSV.  Validates each row, skips duplicates and inserts
+ * the rest.  Returns a summary so the UI can display results.
+ */
+export async function importProjectsFromCSV(rowsJson: string): Promise<CsvImportResult> {
+  await requireAdmin();
+
+  const rows: Record<string, string>[] = JSON.parse(rowsJson);
+  const result: CsvImportResult = { created: 0, skipped: [], errors: [] };
+
+  for (let i = 0; i < rows.length; i++) {
+    const raw = rows[i];
+    const rowNum = i + 2; // +1 header, +1 for 1-based display
+    const clave = raw.claveProyecto?.trim() ?? '';
+
+    const parsed = projectSchema.safeParse({
+      claveProyecto:   raw.claveProyecto?.trim(),
+      titulo:          raw.titulo?.trim(),
+      organizacion:    raw.organizacion?.trim() || undefined,
+      descripcion:     raw.descripcion?.trim()  || undefined,
+      objetivo:        raw.objetivo?.trim()      || undefined,
+      actividades:     raw.actividades?.trim()   || undefined,
+      periodo:         raw.periodo?.trim(),
+      horas:           raw.horas?.trim(),
+      carrera:         raw.carrera?.trim()         || undefined,
+      modalidad:       raw.modalidad?.trim()       || undefined,
+      ubicacion:       raw.ubicacion?.trim()       || undefined,
+      horarioProyecto: raw.horarioProyecto?.trim() || undefined,
+      cupoTotal:       raw.cupoTotal?.trim(),
+      logoUrl:         raw.logoUrl?.trim()         || undefined,
+      activo:          raw.activo?.trim()          || 'true',
+    });
+
+    if (!parsed.success) {
+      result.errors.push({
+        row: rowNum,
+        clave,
+        message: parsed.error.errors[0].message,
+      });
+      continue;
+    }
+
+    const data = parsed.data;
+
+    // Resolve socioformador by email if provided
+    let socioformadorId: number | null = null;
+    const socioEmail = raw.socioformadorCorreo?.trim();
+    if (socioEmail) {
+      const socio = await db
+        .select({ id: usuarios.id })
+        .from(usuarios)
+        .where(eq(usuarios.correoInstitucional, socioEmail))
+        .limit(1);
+      if (socio[0]) {
+        socioformadorId = socio[0].id;
+      }
+    }
+
+    // Skip if clave already exists
+    const existing = await db
+      .select({ id: proyectos.id })
+      .from(proyectos)
+      .where(eq(proyectos.claveProyecto, data.claveProyecto))
+      .limit(1);
+
+    if (existing.length > 0) {
+      result.skipped.push(data.claveProyecto);
+      continue;
+    }
+
+    await db.insert(proyectos).values({
+      claveProyecto:   data.claveProyecto,
+      titulo:          data.titulo,
+      organizacion:    data.organizacion    ?? null,
+      descripcion:     data.descripcion     ?? null,
+      objetivo:        data.objetivo        ?? null,
+      actividades:     data.actividades     ?? null,
+      periodo:         data.periodo,
+      horas:           data.horas,
+      carrera:         data.carrera         ?? null,
+      modalidad:       data.modalidad       ?? null,
+      ubicacion:       data.ubicacion       ?? null,
+      horarioProyecto: data.horarioProyecto ?? null,
+      cupoTotal:       data.cupoTotal,
+      cupoDisponible:  data.cupoTotal,
+      socioformadorId,
+      logoUrl:         data.logoUrl         ?? null,
+      activo:          data.activo          ?? true,
+    });
+
+    result.created++;
+  }
+
+  revalidatePath('/admin/projects');
+  return result;
+}

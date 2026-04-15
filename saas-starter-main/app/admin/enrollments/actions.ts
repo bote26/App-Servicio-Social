@@ -6,6 +6,48 @@ import { eq, desc, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { revalidatePath } from 'next/cache';
 
+export async function getCertificateDataAdmin(folio: string) {
+  await requireAdmin();
+
+  const rows = await db
+    .select({
+      inscripcion: inscripciones,
+      proyecto: proyectos,
+      alumno: usuarios,
+    })
+    .from(inscripciones)
+    .innerJoin(proyectos, eq(inscripciones.proyectoId, proyectos.id))
+    .innerJoin(usuarios, eq(inscripciones.alumnoId, usuarios.id))
+    .where(eq(inscripciones.folio, folio))
+    .limit(1);
+
+  if (!rows[0]) return null;
+
+  const { inscripcion, proyecto, alumno } = rows[0];
+
+  return {
+    student: {
+      nombreCompleto: alumno.nombreCompleto ?? 'Sin nombre',
+      matricula: alumno.matricula,
+      correoInstitucional: alumno.correoInstitucional,
+    },
+    project: {
+      claveProyecto: proyecto.claveProyecto,
+      titulo: proyecto.titulo,
+      organizacion: proyecto.organizacion,
+      horas: proyecto.horas,
+      modalidad: proyecto.modalidad,
+      periodo: proyecto.periodo,
+      ubicacion: proyecto.ubicacion,
+    },
+    inscription: {
+      folio: inscripcion.folio,
+      fechaInscripcion: inscripcion.fechaInscripcion,
+      confirmacionSistema: inscripcion.confirmacionSistema,
+    },
+  };
+}
+
 export async function getAllEnrollments() {
   await requireAdmin();
 

@@ -2,6 +2,8 @@ import { getAllEnrollments, getProjectsWithEnrollments } from './actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardList } from 'lucide-react';
 import UnenrollButton from './unenroll-button';
+import AdminCertificateButton from './certificate-button';
+import ProjectFilter from './project-filter';
 
 export default async function AdminEnrollmentsPage({
   searchParams,
@@ -30,28 +32,11 @@ export default async function AdminEnrollmentsPage({
       {/* Filter */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <form method="GET" className="flex items-center gap-4">
-            <label className="text-sm text-gray-600 font-medium">Filtrar por proyecto:</label>
-            <select
-              name="proyecto"
-              defaultValue={selectedProjectId ?? ''}
-              className="h-10 rounded-md border border-gray-200 px-3 text-sm min-w-[280px]"
-              onChange={(e) => {
-                const form = e.target.closest('form') as HTMLFormElement;
-                form?.submit();
-              }}
-            >
-              <option value="">Todos los proyectos</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.claveProyecto} — {p.titulo}
-                </option>
-              ))}
-            </select>
-            <span className="text-sm text-gray-500">
-              {enrollments.length} inscripción{enrollments.length !== 1 ? 'es' : ''}
-            </span>
-          </form>
+          <ProjectFilter
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            count={enrollments.length}
+          />
         </CardContent>
       </Card>
 
@@ -78,7 +63,7 @@ export default async function AdminEnrollmentsPage({
                     <th className="pb-3 font-medium">Período</th>
                     <th className="pb-3 font-medium">Folio</th>
                     <th className="pb-3 font-medium">Fecha</th>
-                    <th className="pb-3 font-medium text-right">Acción</th>
+                    <th className="pb-3 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -101,11 +86,14 @@ export default async function AdminEnrollmentsPage({
                         {new Date(e.fechaInscripcion).toLocaleDateString('es-MX')}
                       </td>
                       <td className="py-3 text-right">
-                        <UnenrollButton
-                          inscripcionId={e.id}
-                          alumnoNombre={e.alumnoNombre || e.alumnoCorreo || ''}
-                          proyectoTitulo={e.proyectoTitulo}
-                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <AdminCertificateButton folio={e.folio} />
+                          <UnenrollButton
+                            inscripcionId={e.id}
+                            alumnoNombre={e.alumnoNombre || e.alumnoCorreo || ''}
+                            proyectoTitulo={e.proyectoTitulo}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  CheckCircle, Clock, MapPin, Calendar, Building2, 
-  FileText, Loader2, AlertCircle, Copy, ExternalLink 
+import {
+  CheckCircle, Clock, MapPin, Calendar, Building2,
+  FileText, Loader2, AlertCircle, Copy, ExternalLink
 } from 'lucide-react';
+import CertificateButton from './_components/certificate-button';
 import { fetchMyEnrollments } from './actions';
 
 interface Enrollment {
@@ -178,13 +179,14 @@ export default function MyEnrollmentsPage() {
                     </div>
                   )}
 
-                  <div className="mt-4 flex gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/dashboard/projects/${enrollment.proyecto.id}`}>
                         <ExternalLink className="h-4 w-4 mr-1" />
                         Ver detalles del proyecto
                       </Link>
                     </Button>
+                    <CertificateButton folio={enrollment.inscripcion.folio} />
                   </div>
                 </div>
               </div>

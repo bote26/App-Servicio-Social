@@ -9,7 +9,8 @@
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
     "db:push": "npx drizzle-kit push",
-    "db:studio": "npx drizzle-kit studio"
+    "db:studio": "npx drizzle-kit studio",
+    "keys:generate": "npx tsx lib/scripts/generate-keys.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.1.7",
