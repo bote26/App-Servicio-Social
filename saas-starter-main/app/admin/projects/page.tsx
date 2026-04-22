@@ -2,7 +2,7 @@ import { getAllProjects } from '@/lib/db/queries';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Plus, Edit, Users, Clock, MapPin } from 'lucide-react';
+import { Plus, Edit, Users, Clock, MapPin, Upload } from 'lucide-react';
 import { ToggleStatusButton } from './toggle-status-button';
 
 export default async function AdminProjectsPage() {
@@ -15,12 +15,20 @@ export default async function AdminProjectsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Gestión de Proyectos</h1>
           <p className="text-gray-600">Administra los proyectos de servicio social</p>
         </div>
-        <Button asChild>
-          <Link href="/admin/projects/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Proyecto
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/projects/import">
+              <Upload className="h-4 w-4 mr-2" />
+              Importar CSV
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/projects/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Proyecto
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {projects.length === 0 ? (
