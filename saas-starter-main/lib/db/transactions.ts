@@ -10,6 +10,7 @@ import {
   NewActivityLog,
   ActivityType,
   PreRegistroEstado,
+  TipoProyecto,
 } from './schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { generateFolio, generateSystemConfirmation } from '@/lib/utils/folio';
@@ -50,19 +51,27 @@ export async function enrollStudentInProject(
         return { success: false, error: 'No hay cupos disponibles en este proyecto' };
       }
 
+      // Determine the type this enrollment will consume
+      const tipoProyecto = (project[0].tipoProyecto as TipoProyecto) || TipoProyecto.GENERAL;
+
+      // Check for an existing enrollment of the same type for this period
       const existingEnrollment = await tx
         .select()
         .from(inscripciones)
         .where(
           and(
             eq(inscripciones.alumnoId, alumnoId),
-            eq(inscripciones.periodo, periodo)
+            eq(inscripciones.periodo, periodo),
+            eq(inscripciones.tipoProyecto, tipoProyecto)
           )
         )
         .limit(1);
 
       if (existingEnrollment[0]) {
-        return { success: false, error: 'Ya estás inscrito en un proyecto para este periodo' };
+        const tipoLabel = tipoProyecto === TipoProyecto.GENERAL
+          ? 'este periodo'
+          : `el periodo como proyecto ${tipoProyecto}`;
+        return { success: false, error: `Ya tienes una inscripción activa para ${tipoLabel}` };
       }
 
       const code = await tx
@@ -110,6 +119,7 @@ export async function enrollStudentInProject(
         proyectoId,
         codigoId: code[0].id,
         periodo,
+        tipoProyecto,
         folio,
         confirmacionSistema: confirmacion,
       };

@@ -18,6 +18,7 @@ interface Project {
   organizacion: string | null;
   descripcion: string | null;
   periodo: string;
+  tipoProyecto: string | null;
   horas: number;
   carrera: string | null;
   modalidad: string | null;
@@ -30,6 +31,7 @@ interface Project {
 interface Eligibility {
   eligible: boolean;
   reason: string;
+  enrolledTypes?: string[];
   enrollment?: any;
 }
 
@@ -97,49 +99,46 @@ export default function ProjectsPage() {
         {projects[0]?.periodo || 'Febrero - Junio 2026'}
       </p>
 
-      {/* Eligibility Warning */}
-      {eligibility && !eligibility.eligible && (
-        <div className={`mb-6 p-4 rounded-lg border ${
-          eligibility.reason === 'already_enrolled'
-            ? 'bg-green-50 border-green-200'
-            : 'bg-yellow-50 border-yellow-200'
-        }`}>
-          <div className="flex items-start gap-3">
-            {eligibility.reason === 'already_enrolled' ? (
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-            ) : (
+      {/* Eligibility / enrollment status banner */}
+      {eligibility && (
+        <>
+          {eligibility.reason === 'not_registered_for_fair' && (
+            <div className="mb-6 p-4 rounded-lg border bg-yellow-50 border-yellow-200 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            )}
-            <div>
-              <p className={`font-medium ${
-                eligibility.reason === 'already_enrolled' ? 'text-green-800' : 'text-yellow-800'
-              }`}>
-                {eligibility.reason === 'not_registered_for_fair' && 'Registro a la feria requerido'}
-                {eligibility.reason === 'already_enrolled' && 'Ya estás inscrito'}
-              </p>
-              <p className={`text-sm ${
-                eligibility.reason === 'already_enrolled' ? 'text-green-700' : 'text-yellow-700'
-              }`}>
-                {eligibility.reason === 'not_registered_for_fair' && (
-                  <>
-                    Debes registrarte para la feria antes de poder inscribirte a un proyecto. {' '}
-                    <Link href="/dashboard/fair-registration" className="underline font-medium">
-                      Ir al registro
-                    </Link>
-                  </>
-                )}
-                {eligibility.reason === 'already_enrolled' && (
-                  <>
-                    Ya tienes una inscripción activa para este periodo. {' '}
-                    <Link href="/dashboard/my-enrollments" className="underline font-medium">
-                      Ver mis inscripciones
-                    </Link>
-                  </>
-                )}
-              </p>
+              <div>
+                <p className="font-medium text-yellow-800">Registro a la feria requerido</p>
+                <p className="text-sm text-yellow-700">
+                  Debes registrarte para la feria antes de inscribirte.{' '}
+                  <Link href="/dashboard/fair-registration" className="underline font-medium">Ir al registro</Link>
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+          {eligibility.reason === 'already_enrolled_both' && (
+            <div className="mb-6 p-4 rounded-lg border bg-green-50 border-green-200 flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-green-800">Inscripciones completas</p>
+                <p className="text-sm text-green-700">
+                  Ya tienes un proyecto Intensivo y uno Semestral para este periodo.{' '}
+                  <Link href="/dashboard/my-enrollments" className="underline font-medium">Ver mis inscripciones</Link>
+                </p>
+              </div>
+            </div>
+          )}
+          {eligibility.eligible && (eligibility.enrolledTypes?.length ?? 0) > 0 && (
+            <div className="mb-6 p-4 rounded-lg border bg-blue-50 border-blue-200 flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-800">Inscripcion parcial</p>
+                <p className="text-sm text-blue-700">
+                  Ya tienes: <span className="font-semibold">{eligibility.enrolledTypes?.join(', ')}</span>.
+                  {' '}Aún puedes inscribirte en {eligibility.enrolledTypes?.includes('Intensivo') ? 'Semestral' : 'Intensivo'}.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Search and Filters */}
@@ -249,11 +248,22 @@ function ProjectCard({ project, canEnroll }: { project: Project; canEnroll: bool
           {isFull ? 'Sin cupos' : `${project.cupoDisponible} cupos`}
         </div>
 
+        {/* Tipo badge */}
+        {project.tipoProyecto && (
+          <div className={`absolute bottom-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+            project.tipoProyecto === 'Intensivo'
+              ? 'bg-orange-100 text-orange-700'
+              : 'bg-purple-100 text-purple-700'
+          }`}>
+            {project.tipoProyecto}
+          </div>
+        )}
+
         {/* Carrera tags */}
         <div className="absolute top-3 left-3 flex gap-1 flex-wrap max-w-[60%]">
           {project.carrera?.split(', ').slice(0, 2).map((tag) => (
-            <span 
-              key={tag} 
+            <span
+              key={tag}
               className="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-semibold rounded-full"
             >
               {tag}

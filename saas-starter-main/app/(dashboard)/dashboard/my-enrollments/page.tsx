@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import CertificateButton from './_components/certificate-button';
 import { fetchMyEnrollments } from './actions';
+import { formatMexicoDateLong } from '@/lib/utils/date';
 
 interface Enrollment {
   inscripcion: {
@@ -153,11 +154,7 @@ export default function MyEnrollmentsPage() {
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        Inscrito el {new Date(enrollment.inscripcion.fechaInscripcion).toLocaleDateString('es-MX', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        Inscrito el {formatMexicoDateLong(enrollment.inscripcion.fechaInscripcion)}
                       </p>
                     </div>
                   </div>

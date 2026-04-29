@@ -13,6 +13,7 @@ import {
 } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
+import { mexicoTodayString } from '@/lib/utils/date';
 
 // =============================================================================
 // USER QUERIES
@@ -407,15 +408,17 @@ export async function getEnrollmentTrend(days: number = 30) {
 }
 
 export async function getEnrollmentTrendByHour() {
+  // Compare against Mexico City date, extract hour in Mexico City time
+  const today = mexicoTodayString(); // e.g. "2026-04-29"
   const results = await db
     .select({
-      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`,
+      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`,
       count: sql<number>`count(*)`,
     })
     .from(inscripciones)
-    .where(sql`DATE(${inscripciones.fechaInscripcion}) = CURRENT_DATE`)
-    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`)
-    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`);
+    .where(sql`(${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')::date = ${today}::date`)
+    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`)
+    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`);
 
   const map = new Map(results.map((r) => [Number(r.hora), Number(r.count)]));
   const trend: { hora: string; nuevos: number; acumulado: number }[] = [];
@@ -483,9 +486,10 @@ export async function getSocioformadorProjectsCapacity(userId: number) {
 }
 
 export async function getSocioformadorEnrollmentsByHour(userId: number) {
+  const today = mexicoTodayString();
   const results = await db
     .select({
-      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`,
+      hora: sql<number>`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`,
       count: sql<number>`count(*)`,
     })
     .from(inscripciones)
@@ -493,11 +497,11 @@ export async function getSocioformadorEnrollmentsByHour(userId: number) {
     .where(
       and(
         eq(proyectos.socioformadorId, userId),
-        sql`DATE(${inscripciones.fechaInscripcion}) = CURRENT_DATE`
+        sql`(${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')::date = ${today}::date`
       )
     )
-    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`)
-    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion})`);
+    .groupBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`)
+    .orderBy(sql`EXTRACT(HOUR FROM ${inscripciones.fechaInscripcion} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City')`);
 
   const map = new Map(results.map((r) => [Number(r.hora), Number(r.count)]));
   return Array.from({ length: 24 }, (_, h) => ({

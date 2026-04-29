@@ -1,4 +1,5 @@
 import { getActivityLogs } from '@/lib/db/queries';
+import { formatTimeAgoMexico } from '@/lib/utils/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, LogIn, LogOut, UserPlus, Key, Trash, UserCog, Calendar, CheckCircle, FileText } from 'lucide-react';
 
@@ -28,24 +29,6 @@ const activityLabels: Record<string, string> = {
   CODE_USED: 'Código utilizado',
 };
 
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'Hace un momento';
-  if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
-  if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-  if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-  
-  return date.toLocaleDateString('es-MX', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 export default async function ActivityPage() {
   const logs = await getActivityLogs();
@@ -85,7 +68,7 @@ export default async function ActivityPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900">{label}</p>
                       <p className="text-sm text-gray-500">
-                        {formatTimeAgo(new Date(log.timestamp))}
+                        {formatTimeAgoMexico(log.timestamp)}
                       </p>
                     </div>
                   </div>

@@ -90,7 +90,7 @@ export async function exportCodesToCSV(proyectoId: number) {
   const rows = codes.map(c => [
     c.codigo,
     c.usado ? 'Usado' : 'Disponible',
-    new Date(c.createdAt).toLocaleString('es-MX'),
+    new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(c.createdAt)),
   ]);
 
   const csv = [

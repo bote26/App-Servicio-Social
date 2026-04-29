@@ -25,6 +25,7 @@ interface Project {
   objetivo: string | null;
   actividades: string | null;
   periodo: string;
+  tipoProyecto: string | null;
   horas: number;
   carrera: string | null;
   modalidad: string | null;
@@ -38,6 +39,7 @@ interface Project {
 interface Eligibility {
   eligible: boolean;
   reason: string;
+  enrolledTypes?: string[];
 }
 
 export default function ProjectDetailPage() {
@@ -162,7 +164,10 @@ export default function ProjectDetailPage() {
   }
 
   const isFull = project.cupoDisponible === 0;
-  const canEnroll = eligibility?.eligible && !isFull;
+  // A student can't enroll if they already have a project of the same type
+  const projectTipo = project.tipoProyecto || 'General';
+  const alreadyHasThisType = eligibility?.enrolledTypes?.includes(projectTipo) ?? false;
+  const canEnroll = eligibility?.eligible && !isFull && !alreadyHasThisType;
 
   return (
     <div className="flex-1 p-4 lg:p-8">
@@ -342,24 +347,42 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
 
+              {/* Tipo badge */}
+              {project.tipoProyecto && (
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide w-fit ${
+                  project.tipoProyecto === 'Intensivo'
+                    ? 'bg-orange-100 text-orange-700'
+                    : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {project.tipoProyecto}
+                </div>
+              )}
+
               {/* Eligibility messages */}
-              {!eligibility?.eligible && (
+              {eligibility?.reason === 'not_registered_for_fair' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <p className="text-sm text-yellow-800">
-                    {eligibility?.reason === 'not_registered_for_fair' && (
-                      <>
-                        Debes registrarte para la feria primero. {' '}
-                        <Link href="/dashboard/fair-registration" className="underline font-medium">
-                          Ir al registro
-                        </Link>
-                      </>
-                    )}
-                    {eligibility?.reason === 'not_validated' && (
-                      'Tu asistencia a la feria debe ser validada primero.'
-                    )}
-                    {eligibility?.reason === 'already_enrolled' && (
-                      'Ya tienes una inscripción activa para este periodo.'
-                    )}
+                    Debes registrarte para la feria primero.{' '}
+                    <Link href="/dashboard/fair-registration" className="underline font-medium">
+                      Ir al registro
+                    </Link>
+                  </p>
+                </div>
+              )}
+              {eligibility?.reason === 'already_enrolled_both' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-sm text-green-800">
+                    Ya completaste tus inscripciones (Intensivo + Semestral) para este periodo.
+                  </p>
+                </div>
+              )}
+              {alreadyHasThisType && eligibility?.eligible && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800">
+                    Ya tienes un proyecto <strong>{projectTipo}</strong> inscrito para este periodo.{' '}
+                    <Link href="/dashboard/my-enrollments" className="underline font-medium">
+                      Ver mis inscripciones
+                    </Link>
                   </p>
                 </div>
               )}

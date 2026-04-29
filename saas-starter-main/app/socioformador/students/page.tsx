@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Loader2, AlertCircle, Mail, Download } from 'lucide-react';
 import { getMyProjects, getProjectStudents } from '../actions';
+import { formatMexicoDate } from '@/lib/utils/date';
 
 interface Project {
   id: number;
@@ -79,7 +80,7 @@ export default function SocioformadorStudentsPage() {
       s.student.matricula || '',
       s.student.correoInstitucional,
       s.enrollment.folio,
-      new Date(s.enrollment.fechaInscripcion).toLocaleDateString('es-MX'),
+      formatMexicoDate(s.enrollment.fechaInscripcion),
     ]);
 
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -183,7 +184,7 @@ export default function SocioformadorStudentsPage() {
                           </span>
                         </td>
                         <td className="p-4 text-sm text-gray-600">
-                          {new Date(entry.enrollment.fechaInscripcion).toLocaleDateString('es-MX')}
+                          {formatMexicoDate(entry.enrollment.fechaInscripcion)}
                         </td>
                         <td className="p-4 text-right">
                           <a 

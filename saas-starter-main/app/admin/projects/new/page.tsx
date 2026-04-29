@@ -125,7 +125,20 @@ export default function NewProjectPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div>
+                <Label htmlFor="tipoProyecto">Tipo de Proyecto *</Label>
+                <select
+                  id="tipoProyecto"
+                  name="tipoProyecto"
+                  className="w-full h-10 rounded-md border border-gray-200 px-3 text-sm"
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="Intensivo">Intensivo</option>
+                  <option value="Semestral">Semestral</option>
+                </select>
+              </div>
               <div>
                 <Label htmlFor="horas">Horas *</Label>
                 <Input

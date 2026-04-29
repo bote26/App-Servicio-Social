@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db/drizzle';
-import { proyectos, inscripciones, preRegistroFeria, eventosFeria } from '@/lib/db/schema';
+import { proyectos, inscripciones, preRegistroFeria, eventosFeria, TipoProyecto, TIPOS_PROYECTO } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getUser } from '@/lib/db/queries';
 import { enrollStudentInProject } from '@/lib/db/transactions';
@@ -96,6 +96,7 @@ export async function checkStudentEligibility() {
 
   // Validation step removed - students can enroll directly after pre-registration
 
+  // Fetch existing enrollments for any active-period project
   const activeProject = await db
     .select()
     .from(proyectos)
@@ -103,23 +104,32 @@ export async function checkStudentEligibility() {
     .limit(1);
 
   if (activeProject.length > 0) {
-    const existingEnrollment = await db
-      .select()
+    const existingEnrollments = await db
+      .select({ tipoProyecto: inscripciones.tipoProyecto })
       .from(inscripciones)
       .where(
         and(
           eq(inscripciones.alumnoId, user.id),
           eq(inscripciones.periodo, activeProject[0].periodo)
         )
-      )
-      .limit(1);
+      );
 
-    if (existingEnrollment.length > 0) {
-      return { eligible: false, reason: 'already_enrolled', enrollment: existingEnrollment[0] };
+    const enrolledTypes = existingEnrollments.map(e => e.tipoProyecto);
+
+    // If the student already has both Intensivo and Semestral they cannot enroll more
+    const hasIntensivo  = enrolledTypes.includes(TipoProyecto.INTENSIVO);
+    const hasSemestral  = enrolledTypes.includes(TipoProyecto.SEMESTRAL);
+    const hasGeneral    = enrolledTypes.includes(TipoProyecto.GENERAL);
+
+    // Legacy/general projects still block further general enrollment
+    if (hasIntensivo && hasSemestral) {
+      return { eligible: false, reason: 'already_enrolled_both', enrolledTypes };
     }
+
+    return { eligible: true, reason: 'eligible', enrolledTypes };
   }
 
-  return { eligible: true, reason: 'eligible' };
+  return { eligible: true, reason: 'eligible', enrolledTypes: [] };
 }
 
 export async function enrollInProject(projectId: number, code: string) {

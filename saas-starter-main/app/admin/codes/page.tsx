@@ -173,13 +173,7 @@ export default function CodesPage() {
     yPosition += 6;
     doc.text(`Codigos Disponibles: ${availableCodes.length} de ${codes.length}`, margin, yPosition);
     yPosition += 6;
-    doc.text(`Fecha de generacion: ${new Date().toLocaleDateString('es-MX', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })}`, margin, yPosition);
+    doc.text(`Fecha de generacion: ${new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}`, margin, yPosition);
     yPosition += 15;
 
     doc.setDrawColor(200);
@@ -284,9 +278,7 @@ export default function CodesPage() {
       doc.text('Sistema de Servicio Social - Todos los Proyectos', pageWidth / 2, 33, { align: 'center' });
       
       doc.setFontSize(10);
-      doc.text(`Generado: ${new Date().toLocaleDateString('es-MX', { 
-        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      })}`, pageWidth / 2, 40, { align: 'center' });
+      doc.text(`Generado: ${new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}`, pageWidth / 2, 40, { align: 'center' });
 
       let isFirstProject = true;
 
@@ -609,8 +601,8 @@ export default function CodesPage() {
                           </td>
                           <td className="p-4 text-sm text-gray-500">
                             {entry.code.usado && entry.code.usadoEn
-                              ? new Date(entry.code.usadoEn).toLocaleDateString('es-MX')
-                              : new Date(entry.code.createdAt).toLocaleDateString('es-MX')}
+                              ? new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(entry.code.usadoEn))
+                              : new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(entry.code.createdAt))}
                           </td>
                           <td className="p-4 text-right">
                             {!entry.code.usado && (

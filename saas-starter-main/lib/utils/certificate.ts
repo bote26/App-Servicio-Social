@@ -89,8 +89,10 @@ export function generateCertificatePDF(data: CertificateData): jsPDF {
   const conf        = parseConfirmacion(data.inscription.confirmacionSistema);
   const isEd25519   = conf.algorithm === 'Ed25519';
   const enrollDate  = new Date(data.inscription.fechaInscripcion);
-  const dateStr     = enrollDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
-  const timeStr     = enrollDate.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  const mxFmt = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', ...opts }).format(enrollDate);
+  const dateStr = mxFmt({ day: 'numeric', month: 'long', year: 'numeric' });
+  const timeStr = mxFmt({ hour: '2-digit', minute: '2-digit', hour12: false });
 
   // ─── Page borders ────────────────────────────────────────────────────────
   doc.setDrawColor(30, 58, 138);
@@ -322,7 +324,7 @@ export function generateCertificatePDF(data: CertificateData): jsPDF {
   doc.setLineWidth(0.8);
   doc.line(margin, bottomLineY, margin + cw, bottomLineY);
 
-  const genDate = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+  const genDate = new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(107, 114, 128);

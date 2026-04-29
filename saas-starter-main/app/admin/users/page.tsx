@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Users, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import DeleteSocioformadorButton from './delete-button';
+import { formatMexicoDate } from '@/lib/utils/date';
 
 export default async function AdminUsersPage() {
   const socioformadores = await getSocioformadores();
@@ -68,7 +69,7 @@ export default async function AdminUsersPage() {
                       <td className="py-3 text-gray-600">{sf.correoInstitucional}</td>
                       <td className="py-3 text-gray-600">{sf.numeroPersonal || '—'}</td>
                       <td className="py-3 text-gray-500">
-                        {new Date(sf.createdAt).toLocaleDateString('es-MX')}
+                        {formatMexicoDate(sf.createdAt)}
                       </td>
                       <td className="py-3 text-right">
                         <DeleteSocioformadorButton id={sf.id} nombre={sf.nombreCompleto || sf.correoInstitucional} />

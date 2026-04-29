@@ -4,6 +4,7 @@ import { ClipboardList } from 'lucide-react';
 import UnenrollButton from './unenroll-button';
 import AdminCertificateButton from './certificate-button';
 import ProjectFilter from './project-filter';
+import { formatMexicoDateTime } from '@/lib/utils/date';
 
 export default async function AdminEnrollmentsPage({
   searchParams,
@@ -83,7 +84,7 @@ export default async function AdminEnrollmentsPage({
                       <td className="py-3 text-gray-600">{e.periodo}</td>
                       <td className="py-3 font-mono text-xs text-gray-500">{e.folio}</td>
                       <td className="py-3 text-gray-500 text-xs">
-                        {new Date(e.fechaInscripcion).toLocaleDateString('es-MX')}
+                        {formatMexicoDateTime(e.fechaInscripcion)}
                       </td>
                       <td className="py-3 text-right">
                         <div className="flex items-center justify-end gap-2">

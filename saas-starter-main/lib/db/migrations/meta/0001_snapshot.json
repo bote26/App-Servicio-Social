@@ -1,0 +1,764 @@
+{
+  "id": "c9e22246-2929-4c23-a96b-fda5f734f85a",
+  "prevId": "88102133-b7a2-4bf7-a29a-1edfbfde0c84",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.activity_logs": {
+      "name": "activity_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "activity_logs_user_id_usuarios_id_fk": {
+          "name": "activity_logs_user_id_usuarios_id_fk",
+          "tableFrom": "activity_logs",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.codigos_proyecto": {
+      "name": "codigos_proyecto",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "proyecto_id": {
+          "name": "proyecto_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codigo_hash": {
+          "name": "codigo_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usado": {
+          "name": "usado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "usado_por_alumno_id": {
+          "name": "usado_por_alumno_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "usado_en": {
+          "name": "usado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expira_en": {
+          "name": "expira_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "codigos_proyecto_proyecto_id_proyectos_id_fk": {
+          "name": "codigos_proyecto_proyecto_id_proyectos_id_fk",
+          "tableFrom": "codigos_proyecto",
+          "tableTo": "proyectos",
+          "columnsFrom": [
+            "proyecto_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "codigos_proyecto_usado_por_alumno_id_usuarios_id_fk": {
+          "name": "codigos_proyecto_usado_por_alumno_id_usuarios_id_fk",
+          "tableFrom": "codigos_proyecto",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usado_por_alumno_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unique_proyecto_codigo": {
+          "name": "unique_proyecto_codigo",
+          "nullsNotDistinct": false,
+          "columns": [
+            "proyecto_id",
+            "codigo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.eventos_feria": {
+      "name": "eventos_feria",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_evento": {
+          "name": "fecha_evento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hora_inicio": {
+          "name": "hora_inicio",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hora_fin": {
+          "name": "hora_fin",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inscripciones": {
+      "name": "inscripciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "alumno_id": {
+          "name": "alumno_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proyecto_id": {
+          "name": "proyecto_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codigo_id": {
+          "name": "codigo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periodo": {
+          "name": "periodo",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo_proyecto": {
+          "name": "tipo_proyecto",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'General'"
+        },
+        "folio": {
+          "name": "folio",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_inscripcion": {
+          "name": "fecha_inscripcion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "confirmacion_sistema": {
+          "name": "confirmacion_sistema",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "inscripciones_alumno_id_usuarios_id_fk": {
+          "name": "inscripciones_alumno_id_usuarios_id_fk",
+          "tableFrom": "inscripciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "alumno_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inscripciones_proyecto_id_proyectos_id_fk": {
+          "name": "inscripciones_proyecto_id_proyectos_id_fk",
+          "tableFrom": "inscripciones",
+          "tableTo": "proyectos",
+          "columnsFrom": [
+            "proyecto_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inscripciones_codigo_id_codigos_proyecto_id_fk": {
+          "name": "inscripciones_codigo_id_codigos_proyecto_id_fk",
+          "tableFrom": "inscripciones",
+          "tableTo": "codigos_proyecto",
+          "columnsFrom": [
+            "codigo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "inscripciones_folio_unique": {
+          "name": "inscripciones_folio_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "folio"
+          ]
+        },
+        "unique_alumno_periodo_tipo": {
+          "name": "unique_alumno_periodo_tipo",
+          "nullsNotDistinct": false,
+          "columns": [
+            "alumno_id",
+            "periodo",
+            "tipo_proyecto"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pre_registro_feria": {
+      "name": "pre_registro_feria",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "alumno_id": {
+          "name": "alumno_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evento_feria_id": {
+          "name": "evento_feria_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "horario": {
+          "name": "horario",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'registered'"
+        },
+        "validado_por_id": {
+          "name": "validado_por_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_validacion": {
+          "name": "fecha_validacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pre_registro_feria_alumno_id_usuarios_id_fk": {
+          "name": "pre_registro_feria_alumno_id_usuarios_id_fk",
+          "tableFrom": "pre_registro_feria",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "alumno_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pre_registro_feria_evento_feria_id_eventos_feria_id_fk": {
+          "name": "pre_registro_feria_evento_feria_id_eventos_feria_id_fk",
+          "tableFrom": "pre_registro_feria",
+          "tableTo": "eventos_feria",
+          "columnsFrom": [
+            "evento_feria_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pre_registro_feria_validado_por_id_usuarios_id_fk": {
+          "name": "pre_registro_feria_validado_por_id_usuarios_id_fk",
+          "tableFrom": "pre_registro_feria",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "validado_por_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "unique_alumno_evento": {
+          "name": "unique_alumno_evento",
+          "nullsNotDistinct": false,
+          "columns": [
+            "alumno_id",
+            "evento_feria_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.proyectos": {
+      "name": "proyectos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "clave_proyecto": {
+          "name": "clave_proyecto",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organizacion": {
+          "name": "organizacion",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "objetivo": {
+          "name": "objetivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actividades": {
+          "name": "actividades",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periodo": {
+          "name": "periodo",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo_proyecto": {
+          "name": "tipo_proyecto",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evento_feria_id": {
+          "name": "evento_feria_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "horas": {
+          "name": "horas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "carrera": {
+          "name": "carrera",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modalidad": {
+          "name": "modalidad",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ubicacion": {
+          "name": "ubicacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "horario_proyecto": {
+          "name": "horario_proyecto",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cupo_total": {
+          "name": "cupo_total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cupo_disponible": {
+          "name": "cupo_disponible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "socioformador_id": {
+          "name": "socioformador_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "proyectos_evento_feria_id_eventos_feria_id_fk": {
+          "name": "proyectos_evento_feria_id_eventos_feria_id_fk",
+          "tableFrom": "proyectos",
+          "tableTo": "eventos_feria",
+          "columnsFrom": [
+            "evento_feria_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "proyectos_socioformador_id_usuarios_id_fk": {
+          "name": "proyectos_socioformador_id_usuarios_id_fk",
+          "tableFrom": "proyectos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "socioformador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "proyectos_clave_proyecto_unique": {
+          "name": "proyectos_clave_proyecto_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "clave_proyecto"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.usuarios": {
+      "name": "usuarios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nombre_completo": {
+          "name": "nombre_completo",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo_institucional": {
+          "name": "correo_institucional",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "matricula": {
+          "name": "matricula",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "numero_personal": {
+          "name": "numero_personal",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo_alternativo": {
+          "name": "correo_alternativo",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'student'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "usuarios_correo_institucional_unique": {
+          "name": "usuarios_correo_institucional_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "correo_institucional"
+          ]
+        },
+        "usuarios_matricula_unique": {
+          "name": "usuarios_matricula_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "matricula"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -70,6 +70,7 @@ export const proyectos = pgTable('proyectos', {
   objetivo: text('objetivo'),
   actividades: text('actividades'),
   periodo: varchar('periodo', { length: 100 }).notNull(),
+  tipoProyecto: varchar('tipo_proyecto', { length: 20 }),   // 'Intensivo' | 'Semestral'
   eventoFeriaId: integer('evento_feria_id').references(() => eventosFeria.id),
   horas: integer('horas').notNull(),
   carrera: varchar('carrera', { length: 100 }),
@@ -111,12 +112,16 @@ export const inscripciones = pgTable('inscripciones', {
   proyectoId: integer('proyecto_id').notNull().references(() => proyectos.id),
   codigoId: integer('codigo_id').references(() => codigosProyecto.id),
   periodo: varchar('periodo', { length: 100 }).notNull(),
+  // Type of the enrolled project; inherited from proyectos.tipoProyecto at enrollment time.
+  // Ensures at most 1 Intensivo + 1 Semestral per alumno per periodo.
+  tipoProyecto: varchar('tipo_proyecto', { length: 20 }).notNull().default('General'),
   folio: varchar('folio', { length: 40 }).notNull().unique(),
   fechaInscripcion: timestamp('fecha_inscripcion').notNull().defaultNow(),
   confirmacionSistema: text('confirmacion_sistema'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
-  unique('unique_alumno_periodo').on(table.alumnoId, table.periodo),
+  // One enrollment per (student, period, project-type): allows 1 Intensivo + 1 Semestral
+  unique('unique_alumno_periodo_tipo').on(table.alumnoId, table.periodo, table.tipoProyecto),
 ]);
 
 // =============================================================================
@@ -251,6 +256,14 @@ export enum PreRegistroEstado {
   REGISTERED = 'registered',
   VALIDATED = 'validated',
 }
+
+export enum TipoProyecto {
+  INTENSIVO  = 'Intensivo',
+  SEMESTRAL  = 'Semestral',
+  GENERAL    = 'General',   // legacy / unclassified
+}
+
+export const TIPOS_PROYECTO = [TipoProyecto.INTENSIVO, TipoProyecto.SEMESTRAL] as const;
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',

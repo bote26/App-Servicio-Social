@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { db } from '@/lib/db/drizzle';
 import { proyectos, usuarios, NewProyecto, UserRole } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql, and } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -16,6 +16,7 @@ const projectSchema = z.object({
   objetivo: z.string().optional(),
   actividades: z.string().optional(),
   periodo: z.string().min(1, 'El periodo es obligatorio').max(100),
+  tipoProyecto: z.enum(['Intensivo', 'Semestral', 'General', '']).optional(),
   horas: z.coerce.number().min(1, 'Las horas son obligatorias'),
   carrera: z.string().max(100).optional(),
   modalidad: z.string().max(20).optional(),
@@ -57,6 +58,7 @@ export async function createProject(formData: FormData) {
     objetivo: data.objetivo || null,
     actividades: data.actividades || null,
     periodo: data.periodo,
+    tipoProyecto: data.tipoProyecto || null,
     horas: data.horas,
     carrera: data.carrera || null,
     modalidad: data.modalidad || null,
@@ -110,6 +112,7 @@ export async function updateProject(projectId: number, formData: FormData) {
       objetivo: data.objetivo || null,
       actividades: data.actividades || null,
       periodo: data.periodo,
+      tipoProyecto: data.tipoProyecto || null,
       horas: data.horas,
       carrera: data.carrera || null,
       modalidad: data.modalidad || null,
@@ -166,7 +169,54 @@ export async function getSocioformadores() {
 export interface CsvImportResult {
   created: number;
   skipped: string[];   // claves that already existed
-  errors: { row: number; clave: string; message: string }[];
+  errors:   { row: number; clave: string; message: string }[];
+  warnings: { row: number; clave: string; message: string }[];  // e.g. socioformador not found
+}
+
+// ── Socioformador email pre-validation ────────────────────────────────────────
+
+export interface SocioMatch {
+  id: number;
+  nombre: string | null;
+  correo: string;
+}
+
+/**
+ * Given a JSON-encoded array of emails, returns a map { email → SocioMatch | null }
+ * for all unique addresses.  Used by the import preview to show matched/unmatched
+ * socioformadores before the user confirms the import.
+ */
+export async function validateSocioformadorEmails(
+  emailsJson: string
+): Promise<Record<string, SocioMatch | null>> {
+  await requireAdmin();
+
+  const emails: string[] = JSON.parse(emailsJson);
+  const unique = [...new Set(emails.map(e => e.trim().toLowerCase()).filter(Boolean))];
+
+  if (unique.length === 0) return {};
+
+  // Fetch all socioformadores whose lowercased email matches any of the provided emails.
+  // We do a full scan of socioformadores and filter in JS to avoid SQL injection.
+  const allSocios = await db
+    .select({
+      id:     usuarios.id,
+      nombre: usuarios.nombreCompleto,
+      correo: usuarios.correoInstitucional,
+    })
+    .from(usuarios)
+    .where(eq(usuarios.rol, UserRole.SOCIOFORMADOR));
+
+  const matches = allSocios.filter(s => unique.includes(s.correo.toLowerCase()));
+
+  const result: Record<string, SocioMatch | null> = {};
+  for (const email of unique) {
+    result[email] = null;
+  }
+  for (const m of matches) {
+    result[m.correo.toLowerCase()] = m;
+  }
+  return result;
 }
 
 /**
@@ -178,7 +228,7 @@ export async function importProjectsFromCSV(rowsJson: string): Promise<CsvImport
   await requireAdmin();
 
   const rows: Record<string, string>[] = JSON.parse(rowsJson);
-  const result: CsvImportResult = { created: 0, skipped: [], errors: [] };
+  const result: CsvImportResult = { created: 0, skipped: [], errors: [], warnings: [] };
 
   for (let i = 0; i < rows.length; i++) {
     const raw = rows[i];
@@ -193,6 +243,7 @@ export async function importProjectsFromCSV(rowsJson: string): Promise<CsvImport
       objetivo:        raw.objetivo?.trim()      || undefined,
       actividades:     raw.actividades?.trim()   || undefined,
       periodo:         raw.periodo?.trim(),
+      tipoProyecto:    raw.tipoProyecto?.trim()  || undefined,
       horas:           raw.horas?.trim(),
       carrera:         raw.carrera?.trim()         || undefined,
       modalidad:       raw.modalidad?.trim()       || undefined,
@@ -214,17 +265,30 @@ export async function importProjectsFromCSV(rowsJson: string): Promise<CsvImport
 
     const data = parsed.data;
 
-    // Resolve socioformador by email if provided
+    // Resolve socioformador by email — case-insensitive, role-filtered
     let socioformadorId: number | null = null;
     const socioEmail = raw.socioformadorCorreo?.trim();
     if (socioEmail) {
       const socio = await db
-        .select({ id: usuarios.id })
+        .select({ id: usuarios.id, nombre: usuarios.nombreCompleto })
         .from(usuarios)
-        .where(eq(usuarios.correoInstitucional, socioEmail))
+        .where(
+          and(
+            eq(usuarios.rol, UserRole.SOCIOFORMADOR),
+            sql`lower(${usuarios.correoInstitucional}) = lower(${socioEmail})`
+          )
+        )
         .limit(1);
+
       if (socio[0]) {
         socioformadorId = socio[0].id;
+      } else {
+        // Email provided but no matching socioformador found — warn but still create the project
+        result.warnings.push({
+          row: rowNum,
+          clave,
+          message: `Socioformador con correo "${socioEmail}" no encontrado. El proyecto se creó sin socioformador asignado.`,
+        });
       }
     }
 
@@ -248,6 +312,7 @@ export async function importProjectsFromCSV(rowsJson: string): Promise<CsvImport
       objetivo:        data.objetivo        ?? null,
       actividades:     data.actividades     ?? null,
       periodo:         data.periodo,
+      tipoProyecto:    data.tipoProyecto    || null,
       horas:           data.horas,
       carrera:         data.carrera         ?? null,
       modalidad:       data.modalidad       ?? null,
