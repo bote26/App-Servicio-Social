@@ -130,259 +130,279 @@ export default function CodesPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  /** Draws the full-page cover for a single project and leaves the cursor after it. */
+  const drawProjectCover = (
+    doc: jsPDF,
+    project: { claveProyecto: string; titulo: string; cupoTotal: number; cupoDisponible: number },
+    availableCount: number,
+    totalCount: number,
+    organizacion?: string | null,
+    periodo?: string | null,
+    tipoProyecto?: string | null,
+  ) => {
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const now = new Intl.DateTimeFormat('es-MX', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).format(new Date());
+
+    // ── Header band ──────────────────────────────────────────────────────────
+    doc.setFillColor(30, 64, 175);   // blue-800
+    doc.rect(0, 0, pw, 60, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('SISTEMA DE SERVICIO SOCIAL', pw / 2, 14, { align: 'center' });
+
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CODIGOS DE INSCRIPCION', pw / 2, 28, { align: 'center' });
+
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'normal');
+    const titleLines = doc.splitTextToSize(project.titulo, pw - 30);
+    doc.text(titleLines, pw / 2, 42, { align: 'center' });
+
+    // ── Clave chip ───────────────────────────────────────────────────────────
+    doc.setTextColor(0, 0, 0);
+    doc.setFillColor(239, 246, 255);   // blue-50
+    doc.setDrawColor(147, 197, 253);   // blue-300
+    doc.roundedRect(pw / 2 - 30, 68, 60, 12, 3, 3, 'FD');
+    doc.setFontSize(11);
+    doc.setFont('courier', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text(project.claveProyecto, pw / 2, 76.5, { align: 'center' });
+
+    // ── Info block ───────────────────────────────────────────────────────────
+    const infoY = 92;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);   // gray-600
+
+    const infoLeft: string[] = [];
+    if (organizacion) infoLeft.push(`Organizacion:   ${organizacion}`);
+    if (periodo)       infoLeft.push(`Periodo:        ${periodo}`);
+    if (tipoProyecto)  infoLeft.push(`Tipo:           ${tipoProyecto}`);
+
+    infoLeft.forEach((line, i) => {
+      doc.text(line, 20, infoY + i * 8);
+    });
+
+    // ── Stats cards ──────────────────────────────────────────────────────────
+    const statsY = infoY + infoLeft.length * 8 + 12;
+    const cardW = (pw - 50) / 3;
+    const cardH = 28;
+    const stats = [
+      { label: 'Cupo Total',         value: String(project.cupoTotal),    bg: [239, 246, 255], accent: [30, 64, 175] },
+      { label: 'Cupos Disponibles',  value: String(project.cupoDisponible), bg: [240, 253, 244], accent: [22, 163, 74] },
+      { label: 'Codigos en PDF',     value: String(availableCount),        bg: [255, 251, 235], accent: [180, 83, 9] },
+    ] as const;
+
+    stats.forEach((s, i) => {
+      const x = 20 + i * (cardW + 5);
+      doc.setFillColor(s.bg[0], s.bg[1], s.bg[2]);
+      doc.setDrawColor(s.accent[0], s.accent[1], s.accent[2]);
+      doc.roundedRect(x, statsY, cardW, cardH, 3, 3, 'FD');
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(s.accent[0], s.accent[1], s.accent[2]);
+      doc.text(s.value, x + cardW / 2, statsY + 14, { align: 'center' });
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(75, 85, 99);
+      doc.text(s.label, x + cardW / 2, statsY + 23, { align: 'center' });
+    });
+
+    // ── Instructions ─────────────────────────────────────────────────────────
+    const instY = statsY + cardH + 16;
+    doc.setFillColor(249, 250, 251);
+    doc.setDrawColor(209, 213, 219);
+    doc.roundedRect(20, instY, pw - 40, 38, 3, 3, 'FD');
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(55, 65, 81);
+    doc.text('INSTRUCCIONES PARA EL SOCIOFORMADOR', 28, instY + 9);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    const instructions = [
+      '1. Cada codigo es de uso unico. Entregue uno por estudiante autorizado.',
+      '2. El estudiante debe ingresarlo en la plataforma para completar su inscripcion.',
+      '3. Los codigos usados quedan marcados automaticamente en el sistema.',
+    ];
+    instructions.forEach((line, i) => {
+      doc.text(line, 28, instY + 17 + i * 7);
+    });
+
+    // ── Footer ───────────────────────────────────────────────────────────────
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(156, 163, 175);
+    doc.text(`Generado el ${now}`, pw / 2, ph - 10, { align: 'center' });
+  };
+
+  /** Draws one or more 4×10 grid pages for an array of codes starting from a new page. */
+  const drawCodeGridPages = (
+    doc: jsPDF,
+    codes: string[],
+    projectLabel: string,
+  ) => {
+    const COLS = 4;
+    const ROWS = 10;
+    const PER_PAGE = COLS * ROWS;   // 40
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 12;
+    const colGap = 4;
+    const rowGap = 3;
+    const cellW = (pw - margin * 2 - colGap * (COLS - 1)) / COLS;
+    const cellH = (ph - margin * 2 - 14 - rowGap * (ROWS - 1)) / ROWS;   // 14 = header row
+
+    let pageIndex = 0;
+
+    for (let start = 0; start < codes.length; start += PER_PAGE) {
+      doc.addPage();
+      pageIndex++;
+      const slice = codes.slice(start, start + PER_PAGE);
+
+      // ── Page header ────────────────────────────────────────────────────────
+      doc.setFillColor(30, 64, 175);
+      doc.rect(0, 0, pw, 10, 'F');
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${projectLabel}   |   Hoja ${pageIndex}   |   Codigos ${start + 1}–${Math.min(start + PER_PAGE, codes.length)} de ${codes.length}`, pw / 2, 6.5, { align: 'center' });
+
+      // ── Grid ───────────────────────────────────────────────────────────────
+      const gridTop = 14;
+      doc.setDrawColor(180, 180, 180);
+      doc.setFontSize(12);
+      doc.setFont('courier', 'bold');
+      doc.setTextColor(0, 0, 0);
+
+      slice.forEach((code, i) => {
+        const col = i % COLS;
+        const row = Math.floor(i / COLS);
+        const x = margin + col * (cellW + colGap);
+        const y = gridTop + row * (cellH + rowGap);
+
+        // Cell border only (no fill)
+        doc.setFillColor(255, 255, 255);
+        doc.rect(x, y, cellW, cellH, 'S');
+
+        // Sequential number — top-left corner, tiny
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(180, 180, 180);
+        doc.text(String(start + i + 1), x + 2, y + 5);
+
+        // Code — centered
+        doc.setFontSize(11);
+        doc.setFont('courier', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(code, x + cellW / 2, y + cellH / 2 + 2, { align: 'center' });
+      });
+    }
+  };
+
+  // ── Single-project PDF export ────────────────────────────────────────────────
   const handleExportPDF = () => {
     if (!selectedProject) return;
-    
+
     const project = projects.find(p => p.id === selectedProject);
     if (!project) return;
 
     const availableCodes = codes.filter(c => !c.code.usado);
-    
+
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    let yPosition = margin;
 
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CODIGOS DE INSCRIPCION', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 10;
+    // Cover page
+    drawProjectCover(doc, project, availableCodes.length, codes.length);
 
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Sistema de Servicio Social', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
-
-    doc.setDrawColor(200);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INFORMACION DEL PROYECTO', margin, yPosition);
-    yPosition += 8;
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Clave: ${project.claveProyecto}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Titulo: ${project.titulo}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Cupo Total: ${project.cupoTotal} | Disponible: ${project.cupoDisponible}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Codigos Disponibles: ${availableCodes.length} de ${codes.length}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Fecha de generacion: ${new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}`, margin, yPosition);
-    yPosition += 15;
-
-    doc.setDrawColor(200);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CODIGOS DISPONIBLES PARA SOCIOFORMADOR', margin, yPosition);
-    yPosition += 10;
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Estos codigos son de uso unico. Entregar uno a cada estudiante autorizado.', margin, yPosition);
-    yPosition += 12;
-
-    const codesPerRow = 3;
-    const codeBoxWidth = (pageWidth - margin * 2 - 20) / codesPerRow;
-    const codeBoxHeight = 20;
-    
-    doc.setFontSize(14);
-    doc.setFont('courier', 'bold');
-
-    availableCodes.forEach((entry, index) => {
-      const row = Math.floor(index / codesPerRow);
-      const col = index % codesPerRow;
-      const x = margin + col * (codeBoxWidth + 10);
-      const y = yPosition + row * (codeBoxHeight + 8);
-
-      if (y + codeBoxHeight > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-        return;
-      }
-
-      doc.setDrawColor(100);
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(x, y, codeBoxWidth, codeBoxHeight, 3, 3, 'FD');
-
-      doc.setTextColor(0);
-      doc.text(
-        entry.code.codigo, 
-        x + codeBoxWidth / 2, 
-        y + codeBoxHeight / 2 + 2, 
-        { align: 'center' }
+    // Grid pages (available codes only)
+    if (availableCodes.length > 0) {
+      drawCodeGridPages(
+        doc,
+        availableCodes.map(c => c.code.codigo),
+        project.claveProyecto,
       );
-
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
-      doc.text(`#${index + 1}`, x + 3, y + 5);
-      doc.setFontSize(14);
-      doc.setFont('courier', 'bold');
-      doc.setTextColor(0);
-    });
-
-    const totalRows = Math.ceil(availableCodes.length / codesPerRow);
-    yPosition += totalRows * (codeBoxHeight + 8) + 15;
-
-    if (yPosition < pageHeight - 40) {
-      doc.setDrawColor(200);
-      doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 10;
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
-      doc.text('INSTRUCCIONES:', margin, yPosition);
-      yPosition += 5;
-      doc.text('1. Cada codigo puede usarse una sola vez.', margin, yPosition);
-      yPosition += 4;
-      doc.text('2. El estudiante debe ingresar el codigo en la plataforma para completar su inscripcion.', margin, yPosition);
-      yPosition += 4;
-      doc.text('3. Los codigos usados seran marcados automaticamente en el sistema.', margin, yPosition);
     }
 
     doc.save(`codigos-${project.claveProyecto}-${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  // ── All-projects PDF export ──────────────────────────────────────────────────
   const handleExportAllPDF = async () => {
     setIsExportingAllPDF(true);
-    
+
     try {
       const projectsWithCodes = await getAllProjectsWithCodes();
-      
+
       if (projectsWithCodes.length === 0) {
         setMessage({ type: 'error', text: 'No hay códigos disponibles para exportar' });
         return;
       }
 
       const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 15;
 
-      doc.setFontSize(20);
+      // ── Global cover page ──────────────────────────────────────────────────
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const now = new Intl.DateTimeFormat('es-MX', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }).format(new Date());
+      const totalCodes = projectsWithCodes.reduce((s, p) => s + p.codes.length, 0);
+
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pw, ph, 'F');
+
+      doc.setFillColor(30, 64, 175);
+      doc.rect(0, ph / 2 - 50, pw, 100, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(26);
       doc.setFont('helvetica', 'bold');
-      doc.text('CODIGOS DE INSCRIPCION', pageWidth / 2, 25, { align: 'center' });
-      
-      doc.setFontSize(12);
+      doc.text('CODIGOS DE INSCRIPCION', pw / 2, ph / 2 - 22, { align: 'center' });
+
+      doc.setFontSize(13);
       doc.setFont('helvetica', 'normal');
-      doc.text('Sistema de Servicio Social - Todos los Proyectos', pageWidth / 2, 33, { align: 'center' });
-      
+      doc.text('Sistema de Servicio Social — Todos los Proyectos', pw / 2, ph / 2 - 6, { align: 'center' });
+
       doc.setFontSize(10);
-      doc.text(`Generado: ${new Intl.DateTimeFormat('es-MX', { timeZone: 'America/Mexico_City', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date())}`, pageWidth / 2, 40, { align: 'center' });
+      doc.setTextColor(147, 197, 253);
+      doc.text(`${projectsWithCodes.length} proyectos  •  ${totalCodes} codigos en total`, pw / 2, ph / 2 + 10, { align: 'center' });
 
-      let isFirstProject = true;
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generado el ${now}`, pw / 2, ph - 16, { align: 'center' });
 
+      // ── Per-project: cover + grid ──────────────────────────────────────────
       for (const project of projectsWithCodes) {
-        if (!isFirstProject) {
-          doc.addPage();
-        }
-        isFirstProject = false;
+        doc.addPage();
+        drawProjectCover(
+          doc,
+          project,
+          project.codes.length,
+          project.codes.length,
+          project.organizacion,
+          null,
+          null,
+        );
 
-        let yPosition = 20;
-
-        doc.setFillColor(59, 130, 246);
-        doc.rect(0, 0, pageWidth, 45, 'F');
-
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PROYECTO', margin, yPosition);
-        yPosition += 8;
-
-        doc.setFontSize(12);
-        doc.text(`${project.claveProyecto}`, margin, yPosition);
-        yPosition += 7;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        const titleLines = doc.splitTextToSize(project.titulo, pageWidth - margin * 2);
-        doc.text(titleLines, margin, yPosition);
-        yPosition = 55;
-
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        if (project.organizacion) {
-          doc.text(`Organizacion: ${project.organizacion}`, margin, yPosition);
-          yPosition += 6;
-        }
-        doc.text(`Cupo: ${project.cupoDisponible}/${project.cupoTotal} disponibles`, margin, yPosition);
-        yPosition += 6;
-        doc.text(`Codigos disponibles: ${project.codes.length}`, margin, yPosition);
-        yPosition += 12;
-
-        doc.setDrawColor(200);
-        doc.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 8;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('CODIGOS PARA ENTREGAR A ESTUDIANTES:', margin, yPosition);
-        yPosition += 10;
-
-        const codesPerRow = 3;
-        const codeBoxWidth = (pageWidth - margin * 2 - 16) / codesPerRow;
-        const codeBoxHeight = 18;
-
-        doc.setFontSize(13);
-        doc.setFont('courier', 'bold');
-
-        for (let i = 0; i < project.codes.length; i++) {
-          const row = Math.floor(i / codesPerRow);
-          const col = i % codesPerRow;
-          const x = margin + col * (codeBoxWidth + 8);
-          const y = yPosition + row * (codeBoxHeight + 6);
-
-          if (y + codeBoxHeight > pageHeight - 30) {
-            doc.addPage();
-            yPosition = 20;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`${project.claveProyecto} - ${project.titulo} (continuacion)`, margin, yPosition);
-            yPosition += 12;
-            
-            const newRow = Math.floor((i) / codesPerRow);
-            const adjustedI = i;
-            const newRowInPage = 0;
-            const newY = yPosition + newRowInPage * (codeBoxHeight + 6);
-            
-            doc.setDrawColor(100);
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(x, newY, codeBoxWidth, codeBoxHeight, 2, 2, 'FD');
-            
-            doc.setFontSize(13);
-            doc.setFont('courier', 'bold');
-            doc.setTextColor(0);
-            doc.text(project.codes[i].codigo, x + codeBoxWidth / 2, newY + codeBoxHeight / 2 + 2, { align: 'center' });
-            continue;
-          }
-
-          doc.setDrawColor(100);
-          doc.setFillColor(248, 250, 252);
-          doc.roundedRect(x, y, codeBoxWidth, codeBoxHeight, 2, 2, 'FD');
-
-          doc.setTextColor(0);
-          doc.text(project.codes[i].codigo, x + codeBoxWidth / 2, y + codeBoxHeight / 2 + 2, { align: 'center' });
-        }
-
-        const totalRows = Math.ceil(project.codes.length / codesPerRow);
-        const finalY = yPosition + totalRows * (codeBoxHeight + 6) + 10;
-
-        if (finalY < pageHeight - 25) {
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'italic');
-          doc.setTextColor(120);
-          doc.text('Cada codigo es de uso unico. El estudiante lo ingresa en la plataforma para inscribirse.', margin, pageHeight - 15);
+        if (project.codes.length > 0) {
+          drawCodeGridPages(
+            doc,
+            project.codes.map(c => c.codigo),
+            project.claveProyecto,
+          );
         }
       }
 

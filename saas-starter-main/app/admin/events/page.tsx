@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, Loader2, CheckCircle, Power } from 'lucide-react';
-import { fetchAllEvents, createEvent, toggleEventStatus } from './actions';
+import { Plus, Calendar, Loader2, Power, FileSpreadsheet } from 'lucide-react';
+import { fetchAllEvents, createEvent, toggleEventStatus, getPreRegistrationList } from './actions';
+import * as XLSX from 'xlsx';
 
 interface EventoFeria {
   id: number;
@@ -18,12 +19,27 @@ interface EventoFeria {
   createdAt: Date;
 }
 
+const MX_TZ = 'America/Mexico_City';
+
+function formatMXDate(date: Date | string) {
+  return new Intl.DateTimeFormat('es-MX', {
+    timeZone: MX_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(date));
+}
+
 export default function EventsPage() {
   const [events, setEvents] = useState<EventoFeria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
+  const [exportingId, setExportingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadEvents();
@@ -56,6 +72,56 @@ export default function EventsPage() {
   const handleToggle = async (eventId: number) => {
     await toggleEventStatus(eventId);
     loadEvents();
+  };
+
+  const handleExportExcel = async (event: EventoFeria) => {
+    setExportingId(event.id);
+    try {
+      const rows = await getPreRegistrationList(event.id);
+
+      if (rows.length === 0) {
+        alert('No hay pre-registros para este evento.');
+        return;
+      }
+
+      // Build worksheet data
+      const wsData = [
+        ['#', 'Nombre Completo', 'Matrícula', 'Correo Institucional', 'Horario', 'Estado', 'Fecha de Registro'],
+        ...rows.map((r, i) => [
+          i + 1,
+          r.nombreCompleto ?? '',
+          r.matricula ?? '',
+          r.correo,
+          r.horario,
+          r.estado === 'validated' ? 'Validado' : 'Registrado',
+          formatMXDate(r.fechaRegistro),
+        ]),
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Column widths
+      ws['!cols'] = [
+        { wch: 4 },   // #
+        { wch: 35 },  // Nombre
+        { wch: 15 },  // Matrícula
+        { wch: 35 },  // Correo
+        { wch: 18 },  // Horario
+        { wch: 14 },  // Estado
+        { wch: 20 },  // Fecha
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Pre-registros');
+
+      const fileName = `preregistro-${event.nombre.replace(/\s+/g, '_').toLowerCase()}-${event.fechaEvento}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      alert('Error al generar el archivo Excel.');
+    } finally {
+      setExportingId(null);
+    }
   };
 
   if (isLoading) {
@@ -159,13 +225,13 @@ export default function EventsPage() {
           events.map((event) => (
             <Card key={event.id} className={!event.activo ? 'opacity-60' : ''}>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                       <Calendar className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-lg">{event.nombre}</h3>
                         {event.activo && (
                           <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
@@ -174,7 +240,8 @@ export default function EventsPage() {
                         )}
                       </div>
                       <p className="text-gray-600">
-                        {new Date(event.fechaEvento).toLocaleDateString('es-MX', {
+                        {new Date(event.fechaEvento + 'T12:00:00').toLocaleDateString('es-MX', {
+                          timeZone: MX_TZ,
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',
@@ -184,15 +251,32 @@ export default function EventsPage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggle(event.id)}
-                    className={event.activo ? 'text-red-600' : 'text-green-600'}
-                  >
-                    <Power className="h-4 w-4 mr-1" />
-                    {event.activo ? 'Desactivar' : 'Activar'}
-                  </Button>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleExportExcel(event)}
+                      disabled={exportingId === event.id}
+                      className="text-green-700 border-green-300 hover:bg-green-50"
+                    >
+                      {exportingId === event.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <FileSpreadsheet className="h-4 w-4 mr-1" />
+                      )}
+                      Exportar Pre-registros
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggle(event.id)}
+                      className={event.activo ? 'text-red-600' : 'text-green-600'}
+                    >
+                      <Power className="h-4 w-4 mr-1" />
+                      {event.activo ? 'Desactivar' : 'Activar'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -2,8 +2,8 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/db/drizzle';
-import { eventosFeria, NewEventoFeria } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eventosFeria, NewEventoFeria, preRegistroFeria, usuarios } from '@/lib/db/schema';
+import { eq, desc, asc } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/middleware';
 import { revalidatePath } from 'next/cache';
 
@@ -47,6 +47,27 @@ export async function createEvent(formData: FormData) {
 
   revalidatePath('/admin/events');
   return { success: true };
+}
+
+export async function getPreRegistrationList(eventoId: number) {
+  await requireAdmin();
+
+  const rows = await db
+    .select({
+      id:             preRegistroFeria.id,
+      horario:        preRegistroFeria.horario,
+      estado:         preRegistroFeria.estado,
+      fechaRegistro:  preRegistroFeria.createdAt,
+      nombreCompleto: usuarios.nombreCompleto,
+      matricula:      usuarios.matricula,
+      correo:         usuarios.correoInstitucional,
+    })
+    .from(preRegistroFeria)
+    .innerJoin(usuarios, eq(preRegistroFeria.alumnoId, usuarios.id))
+    .where(eq(preRegistroFeria.eventoFeriaId, eventoId))
+    .orderBy(asc(preRegistroFeria.horario), asc(usuarios.nombreCompleto));
+
+  return rows;
 }
 
 export async function toggleEventStatus(eventId: number) {
