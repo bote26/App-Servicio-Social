@@ -37,12 +37,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
         <TecLogo className="w-48 md:w-64 h-auto" white={true} />
 
         <div className="hidden md:flex items-center gap-4 text-white/80">
-          <Apple size={18} className="cursor-pointer hover:text-white" />
-          <PlayCircle size={18} className="cursor-pointer hover:text-white" />
-          <Twitter size={18} className="cursor-pointer hover:text-white" />
-          <Facebook size={18} className="cursor-pointer hover:text-white" />
-          <Instagram size={18} className="cursor-pointer hover:text-white" />
-          <Youtube size={18} className="cursor-pointer hover:text-white" />
+          
         </div>
       </header>
 
@@ -120,8 +115,6 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
           </form>
 
           <div className="mt-8 flex flex-col items-center gap-2 text-[10px] md:text-xs text-white/90 font-medium tracking-wider uppercase">
-            <Link href="#" className="hover:underline">¿OLVIDASTE TU CONTRASEÑA?</Link>
-            <Link href="#" className="hover:underline">¿NECESITAS AYUDA? CONTÁCTANOS</Link>
           </div>
 
           <div className="mt-6">
@@ -138,8 +131,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       {/* Footer */}
       <footer className="relative z-20 w-full flex flex-col md:flex-row justify-between items-center px-4 py-6 md:px-12 text-[10px] md:text-xs text-white font-medium tracking-wide">
         <div className="flex gap-4 mb-2 md:mb-0">
-          <Link href="#" className="hover:underline uppercase">AVISO DE PRIVACIDAD</Link>
-          <Link href="#" className="hover:underline uppercase">ETHOS</Link>
+          <Link href="http://www.ccm.itesm.mx/serviciosocial/" className="hover:underline uppercase">AVISO DE PRIVACIDAD</Link>
         </div>
 
         <div className="opacity-90">
